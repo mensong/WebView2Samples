@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30011.22
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WebView2APISample", "WebView2APISample\WebView2APISample.vcxproj", "{4F0CEEF3-12B3-425E-9BB0-105200411592}"
 EndProject
@@ -16,6 +16,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WV2CDPExtensionWPFSample", "WV2CDPExtensionWPFSample\WV2CDPExtensionWPFSample.csproj", "{33C09167-E167-42FB-AECA-5BF6C24C3C40}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WebView2SampleWinComp", "WebView2SampleWinComp\WebView2SampleWinComp.vcxproj", "{ABAC8D87-C87B-455C-8340-0A9B0CD9A206}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{F2EBFC5B-DD64-44F8-920B-0D0A1B09CE14}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Plugin.System", "Plugins\Plugin.System\Plugin.System.vcxproj", "{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -241,9 +245,44 @@ Global
 		{ABAC8D87-C87B-455C-8340-0A9B0CD9A206}.Win7 Release|x64.Build.0 = Release|x64
 		{ABAC8D87-C87B-455C-8340-0A9B0CD9A206}.Win7 Release|x86.ActiveCfg = Release|Win32
 		{ABAC8D87-C87B-455C-8340-0A9B0CD9A206}.Win7 Release|x86.Build.0 = Release|Win32
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Debug|Any CPU.Build.0 = Debug|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Debug|ARM64.ActiveCfg = Debug|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Debug|ARM64.Build.0 = Debug|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Debug|x64.ActiveCfg = Debug|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Debug|x64.Build.0 = Debug|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Debug|x86.ActiveCfg = Debug|Win32
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Debug|x86.Build.0 = Debug|Win32
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Release|Any CPU.ActiveCfg = Release|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Release|Any CPU.Build.0 = Release|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Release|ARM64.ActiveCfg = Release|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Release|ARM64.Build.0 = Release|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Release|x64.ActiveCfg = Release|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Release|x64.Build.0 = Release|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Release|x86.ActiveCfg = Release|Win32
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Release|x86.Build.0 = Release|Win32
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Debug|Any CPU.ActiveCfg = Debug|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Debug|Any CPU.Build.0 = Debug|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Debug|ARM64.ActiveCfg = Debug|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Debug|ARM64.Build.0 = Debug|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Debug|x64.ActiveCfg = Debug|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Debug|x64.Build.0 = Debug|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Debug|x86.ActiveCfg = Debug|Win32
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Debug|x86.Build.0 = Debug|Win32
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Release|Any CPU.ActiveCfg = Release|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Release|Any CPU.Build.0 = Release|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Release|ARM64.ActiveCfg = Release|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Release|ARM64.Build.0 = Release|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Release|x64.ActiveCfg = Release|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Release|x64.Build.0 = Release|x64
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Release|x86.ActiveCfg = Release|Win32
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A}.Win7 Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DAA6D01C-85E5-44F0-9D44-5759A9D46B7A} = {F2EBFC5B-DD64-44F8-920B-0D0A1B09CE14}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1267B10C-4298-4F27-ADC5-FE558436C6D4}

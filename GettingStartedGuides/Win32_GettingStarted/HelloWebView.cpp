@@ -82,7 +82,7 @@ int CALLBACK WinMain(
 		szTitle,
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT,
-		1200, 900,
+		800, 600,
 		NULL,
 		NULL,
 		hInstance,
@@ -135,7 +135,7 @@ int CALLBACK WinMain(
 						webviewController->put_Bounds(bounds);
 
 						// Schedule an async task to navigate to Bing
-						webview->Navigate(L"https://www.bing.com/");
+						webview->Navigate(L"https://www.baidu.com/");
 
 						// <NavigationEvents>
 						// Step 4 - Navigation events

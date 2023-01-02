@@ -107,32 +107,35 @@ HRESULT ScenarioIFrameDevicePermission::OnPermissionRequested(
         }
         else
         {
-            std::wstring message = L"An iframe has requested device permission for ";
-            message += PermissionKindToString(kind);
-            message += L" to the website at ";
-            message += uri.get();
-            message += L"?\n\n";
-            message += L"Do you want to grant permission?\n";
-            message += (userInitiated
-                ? L"This request came from a user gesture."
-                : L"This request did not come from a user gesture.");
+            m_cached_permissions[cached_key] = true;
+            state = COREWEBVIEW2_PERMISSION_STATE_ALLOW;
 
-            int response = MessageBox(
-                nullptr, message.c_str(), L"Permission Request",
-                MB_YESNOCANCEL | MB_ICONWARNING);
-            switch (response) {
-                case IDYES:
-                    m_cached_permissions[cached_key] = true;
-                    state = COREWEBVIEW2_PERMISSION_STATE_ALLOW;
-                    break;
-                case IDNO:
-                    m_cached_permissions[cached_key] = false;
-                    state = COREWEBVIEW2_PERMISSION_STATE_DENY;
-                    break;
-                default:
-                    state = COREWEBVIEW2_PERMISSION_STATE_DEFAULT;
-                    break;
-            }
+            //std::wstring message = L"An iframe has requested device permission for ";
+            //message += PermissionKindToString(kind);
+            //message += L" to the website at ";
+            //message += uri.get();
+            //message += L"?\n\n";
+            //message += L"Do you want to grant permission?\n";
+            //message += (userInitiated
+            //    ? L"This request came from a user gesture."
+            //    : L"This request did not come from a user gesture.");
+
+            //int response = MessageBox(
+            //    nullptr, message.c_str(), L"Permission Request",
+            //    MB_YESNOCANCEL | MB_ICONWARNING);
+            //switch (response) {
+            //    case IDYES:
+            //        m_cached_permissions[cached_key] = true;
+            //        state = COREWEBVIEW2_PERMISSION_STATE_ALLOW;
+            //        break;
+            //    case IDNO:
+            //        m_cached_permissions[cached_key] = false;
+            //        state = COREWEBVIEW2_PERMISSION_STATE_DENY;
+            //        break;
+            //    default:
+            //        state = COREWEBVIEW2_PERMISSION_STATE_DEFAULT;
+            //        break;
+            //}
         }
 
         CHECK_FAILURE(args->put_State(state));

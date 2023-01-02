@@ -28,23 +28,23 @@ bool AreFileUrisEqual (std::wstring leftUri, std::wstring rightUri)
 ScenarioAddHostObject::ScenarioAddHostObject(AppWindow* appWindow)
     : m_appWindow(appWindow), m_webView(appWindow->GetWebView())
 {
-    std::wstring sampleUri = m_appWindow->GetLocalUri(L"ScenarioAddHostObject.html");
+    //std::wstring sampleUri = m_appWindow->GetLocalUri(L"ScenarioAddHostObject.html");
 
-    m_hostObject = Microsoft::WRL::Make<HostObjectSample>(
-        [appWindow = m_appWindow](std::function<void(void)> callback)
-    {
-        appWindow->RunAsync(callback);
-    });
+	m_hostObject = Microsoft::WRL::Make<HostObjectSample>(
+		[appWindow = m_appWindow](std::function<void(void)> callback)
+	    {
+		    appWindow->RunAsync(callback);
+	    }, m_appWindow);
 
     CHECK_FAILURE(m_webView->add_NavigationStarting(
         Microsoft::WRL::Callback<ICoreWebView2NavigationStartingEventHandler>(
-            [this, sampleUri](ICoreWebView2* sender, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT
+            [this/*, sampleUri*/](ICoreWebView2* sender, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT
     {
         wil::unique_cotaskmem_string navigationTargetUri;
         CHECK_FAILURE(args->get_Uri(&navigationTargetUri));
         std::wstring uriTarget(navigationTargetUri.get());
 
-        if (AreFileUrisEqual(sampleUri, uriTarget))
+        if (true/*AreFileUrisEqual(sampleUri, uriTarget)*/)
         {
             //! [AddHostObjectToScript]
             VARIANT remoteObjectAsVariant = {};
@@ -55,22 +55,21 @@ ScenarioAddHostObject::ScenarioAddHostObject(AppWindow* appWindow)
             // calling RemoveHostObject first. This will replace the previous object
             // with the new object. In our case this is the same object and everything
             // is fine.
-            CHECK_FAILURE(
-                m_webView->AddHostObjectToScript(L"sample", &remoteObjectAsVariant));
+            CHECK_FAILURE(m_webView->AddHostObjectToScript(L"sample", &remoteObjectAsVariant));
             remoteObjectAsVariant.pdispVal->Release();
             //! [AddHostObjectToScript]
         }
-        else
-        {
-            // We can call RemoveHostObject multiple times in a row without
-            // calling AddHostObjectToScript first. This will produce an error
-            // result so we ignore the failure.
-            m_webView->RemoveHostObjectFromScript(L"sample");
+        //else
+        //{
+        //    // We can call RemoveHostObject multiple times in a row without
+        //    // calling AddHostObjectToScript first. This will produce an error
+        //    // result so we ignore the failure.
+        //    m_webView->RemoveHostObjectFromScript(L"sample");
 
-            // When we navigate elsewhere we're off of the sample
-            // scenario page and so should remove the scenario.
-            m_appWindow->DeleteComponent(this);
-        }
+        //    // When we navigate elsewhere we're off of the sample
+        //    // scenario page and so should remove the scenario.
+        //    m_appWindow->DeleteComponent(this);
+        //}
 
         return S_OK;
     }).Get(), &m_navigationStartingToken));
@@ -103,7 +102,7 @@ ScenarioAddHostObject::ScenarioAddHostObject(AppWindow* appWindow)
                 // Create list of origins which will be checked.
                 // iframe will have access to host object only if its origin belongs
                 // to this list.
-                LPCWSTR origin = L"https://appassets.example/";
+                LPCWSTR origin = L"*";
 
                 CHECK_FAILURE(webviewFrame->AddHostObjectToScriptWithOrigins(
                     L"sample", &remoteObjectAsVariant, 1, &origin));
@@ -133,7 +132,7 @@ ScenarioAddHostObject::ScenarioAddHostObject(AppWindow* appWindow)
         }).Get(), &m_frameCreatedToken));
     }
 
-    CHECK_FAILURE(m_webView->Navigate(sampleUri.c_str()));
+    //CHECK_FAILURE(m_webView->Navigate(sampleUri.c_str()));
 }
 
 ScenarioAddHostObject::~ScenarioAddHostObject()

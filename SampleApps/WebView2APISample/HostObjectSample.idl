@@ -10,6 +10,10 @@ library HostObjectSampleLibrary
     {
         // Demonstrate basic method call with some parameters and a return value.
         HRESULT MethodWithParametersAndReturnValue([in] BSTR stringParameter, [in] INT integerParameter, [out, retval] BSTR* stringResult);
+        HRESULT CallExtend([in] BSTR stringPluginName, [in] BSTR stringMethodName, [in] BSTR stringParameter, [out, retval] BSTR* stringResult);
+        HRESULT LoadPlugins([in] BSTR stringDllPath, [out, retval] BSTR* stringPluginsName);
+        HRESULT LoadScript([in] BSTR stringFilePath);
+
 
         // Demonstrate getting and setting a property.
         [propget] HRESULT Property([out, retval] BSTR* stringResult);

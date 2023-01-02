@@ -5,14 +5,19 @@
 #include "stdafx.h"
 
 #include "HostObjectSampleImpl.h"
+#include "CheckFailure.h"
+#include <fstream>
+#include <sstream>
 
-HostObjectSample::HostObjectSample(HostObjectSample::RunCallbackAsync runCallbackAsync)
-    : m_propertyValue(L"Example Property String Value"), m_runCallbackAsync(runCallbackAsync)
+HostObjectSample::HostObjectSample(HostObjectSample::RunCallbackAsync runCallbackAsync, AppWindow* appWindow)
+    : m_propertyValue(L"")
+    , m_runCallbackAsync(runCallbackAsync)
+    , m_appWindow(appWindow)
 {
+    
 }
 
-STDMETHODIMP HostObjectSample::MethodWithParametersAndReturnValue(
-    BSTR stringParameter, INT integerParameter, BSTR* stringResult)
+STDMETHODIMP HostObjectSample::MethodWithParametersAndReturnValue(BSTR stringParameter, INT integerParameter, BSTR* stringResult)
 {
     std::wstring result = L"MethodWithParametersAndReturnValue(";
     result += stringParameter;
@@ -22,6 +27,102 @@ STDMETHODIMP HostObjectSample::MethodWithParametersAndReturnValue(
     *stringResult = SysAllocString(result.c_str());
 
     return S_OK;
+}
+
+STDMETHODIMP HostObjectSample::CallExtend(BSTR stringPluginName, BSTR stringMethodName, BSTR stringParameter, BSTR* stringResult)
+{
+    auto itFinder1 = m_pluginFunctions.find(stringPluginName);
+    if (itFinder1 == m_pluginFunctions.end())
+        return TYPE_E_ELEMENTNOTFOUND;
+    auto itFinder2 = itFinder1->second.find(stringMethodName);
+    if (itFinder2 == itFinder1->second.end())
+        return TYPE_E_DLLFUNCTIONNOTFOUND;
+    HRESULT res = itFinder2->second(m_appWindow, stringParameter, stringResult);
+    return res;
+}
+
+STDMETHODIMP HostObjectSample::LoadPlugins(BSTR stringDllPath, BSTR* stringPluginsName)
+{
+    HMODULE h = LoadLibraryW(stringDllPath);
+    if (h == NULL)
+        return E_ACCESSDENIED;
+
+    //入口
+    PFN_plugin_entry plugin_entry = (PFN_plugin_entry)GetProcAddress(h, "plugin_entry");
+    if (plugin_entry == NULL)
+        return E_NOINTERFACE;
+    if (plugin_entry(m_appWindow) != 0)
+        return E_NOTIMPL;
+
+    //插件名
+    PFN_plugin_name plugin_name = (PFN_plugin_name)GetProcAddress(h, "plugin_name");
+    if (plugin_name == NULL)
+        return E_NOINTERFACE;
+    const wchar_t* pluginName = plugin_name();
+    if (pluginName == NULL)
+        return E_NOTIMPL;
+
+    //函数列表
+    PFN_plugin_functions plugin_functions = (PFN_plugin_functions)GetProcAddress(h, "plugin_functions");
+    if (plugin_functions == NULL)
+        return E_NOINTERFACE;
+    const wchar_t* functionsNames = plugin_functions();
+    if (functionsNames == NULL)
+        return E_NOTIMPL;
+    const wchar_t* p = functionsNames;
+    while (1)
+    {
+        if (p == NULL)
+        {
+            break;
+        }
+        std::wstring fn(p);
+        if (fn.empty())
+        {
+            break;
+        }
+        std::string sFn = UnicodeToAnsi(fn);
+        PFN_PluginFunction plugin_function = (PFN_PluginFunction)GetProcAddress(h, sFn.c_str());
+        if (plugin_function == NULL)
+            return E_NOTIMPL;
+
+        if (m_pluginFunctions.find(pluginName) == m_pluginFunctions.end())
+            m_pluginFunctions.insert(std::make_pair(pluginName, std::map<std::wstring, PFN_PluginFunction>()));
+
+        if (m_pluginFunctions[pluginName].find(fn) == m_pluginFunctions[pluginName].end())
+            m_pluginFunctions[pluginName].insert(std::make_pair(fn, plugin_function));
+        else
+            m_pluginFunctions[pluginName][fn] = plugin_function;
+
+        p += (int)(wcslen(p) + 1);
+    }
+
+    *stringPluginsName = SysAllocString(pluginName);
+
+    return S_OK;
+}
+
+STDMETHODIMP HostObjectSample::LoadScript(BSTR stringFilePath)
+{
+    std::wifstream fin(stringFilePath);
+    if (fin.good())
+    {
+        std::wstringstream ssContent;
+        ssContent << fin.rdbuf();
+
+        m_appWindow->GetWebView()->ExecuteScript(ssContent.str().c_str(), 
+            Microsoft::WRL::Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
+                [this](HRESULT error, PCWSTR result) -> HRESULT
+        {
+		    return S_OK;
+        }).Get());
+
+        fin.close();
+
+        return S_OK;
+    }
+    
+    return E_ACCESSDENIED;
 }
 
 STDMETHODIMP HostObjectSample::get_Property(BSTR* stringResult)
@@ -109,7 +210,12 @@ STDMETHODIMP HostObjectSample::GetTypeInfo(UINT iTInfo, LCID lcid, ITypeInfo** p
     }
     if (!m_typeLib)
     {
-        RETURN_IF_FAILED(LoadTypeLib(L"WebView2APISample.tlb", &m_typeLib));
+        OLECHAR filename[MAX_PATH];
+        GetModuleFileNameW(NULL, filename, MAX_PATH);
+        std::wstring wfilename(filename);
+        size_t idx = wfilename.find_last_of('.');
+        wfilename = wfilename.substr(0, idx) + L".tlb";
+        RETURN_IF_FAILED(LoadTypeLib(wfilename.c_str(), &m_typeLib));
     }
     return m_typeLib->GetTypeInfoOfGuid(__uuidof(IHostObjectSample), ppTInfo);
 }

@@ -12,20 +12,37 @@
 #include <wrl\client.h>
 
 #include "HostObjectSample_h.h"
+#include "AppWindow.h"
 
-class HostObjectSample : public Microsoft::WRL::RuntimeClass<
-                               Microsoft::WRL::RuntimeClassFlags<Microsoft::WRL::ClassicCom>,
-                               IHostObjectSample, IDispatch>
+//插件方法原型 
+typedef HRESULT (*PFN_PluginFunction)(class AppWindow* appWindow, BSTR stringParamters, BSTR* stringResult);
+
+//插件入口点
+typedef int(*PFN_plugin_entry)(class AppWindow* appWindow);
+//插件名称
+typedef const wchar_t* (*PFN_plugin_name)();
+//插件方法列表
+typedef const wchar_t* (*PFN_plugin_functions)();
+
+class HostObjectSample  : public Microsoft::WRL::RuntimeClass<
+                            Microsoft::WRL::RuntimeClassFlags<Microsoft::WRL::ClassicCom>,
+                            IHostObjectSample, IDispatch>
 {
 public:
     typedef std::function<void(void)> Callback;
     typedef std::function<void(Callback)> RunCallbackAsync;
 
-    HostObjectSample(RunCallbackAsync runCallbackAsync);
+    HostObjectSample(RunCallbackAsync runCallbackAsync, AppWindow* appWindow);
 
     // IHostObjectSample implementation
     STDMETHODIMP MethodWithParametersAndReturnValue(
         BSTR stringParameter, INT integerParameter, BSTR* stringResult) override;
+
+    STDMETHODIMP CallExtend(BSTR stringPluginName, BSTR stringMethodName, BSTR stringParameter, BSTR* stringResult) override;
+
+    STDMETHODIMP LoadPlugins(BSTR stringDllPath, BSTR* stringPluginsName) override;
+
+    STDMETHODIMP LoadScript(BSTR stringFilePath) override;
 
     // Demonstrate getting and setting a property.
     STDMETHODIMP get_Property(BSTR* stringResult) override;
@@ -60,4 +77,8 @@ private:
     DATE m_date;
     WCHAR m_formattedTime[200];
     WCHAR m_formattedDate[200];
+    AppWindow* m_appWindow;
+
+    //<插件名, <方法名, 方法句柄>>
+    std::map<std::wstring, std::map<std::wstring, PFN_PluginFunction>> m_pluginFunctions;
 };

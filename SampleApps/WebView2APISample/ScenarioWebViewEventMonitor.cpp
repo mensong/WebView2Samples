@@ -44,8 +44,9 @@ ScenarioWebViewEventMonitor::ScenarioWebViewEventMonitor(AppWindow* appWindowEve
     m_sampleUri = m_appWindowEventSource->GetLocalUri(c_samplePath);
     m_appWindowEventView = new AppWindow(
         IDM_CREATION_MODE_WINDOWED, appWindowEventSource->GetWebViewOption(),
-        m_sampleUri, appWindowEventSource->GetUserDataFolder(),
-        false, [this]() -> void { InitializeEventView(m_appWindowEventView->GetWebView()); });
+        m_sampleUri, appWindowEventSource->GetInitialScript(), appWindowEventSource->GetUserDataFolder(),
+        false, ([this]() -> void { InitializeEventView(m_appWindowEventView->GetWebView()); }), 
+        appWindowEventSource->GetCustomWindowRect(), appWindowEventSource->GetWindowRect(), appWindowEventSource->GetShouldHaveToolbar());
     // Delete this component when the event monitor window closes.
     // Since this is a component of the event source window, it will automatically
     // be deleted when the event source webview is closed.

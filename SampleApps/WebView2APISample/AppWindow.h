@@ -94,6 +94,7 @@ public:
         UINT creationModeId,
         const WebViewCreateOption& opt,
         const std::wstring& initialUri = L"",
+        const std::wstring& initialScript = L"",
         const std::wstring& userDataFolderParam = L"",
         bool isMainWindow = false,
         std::function<void()> webviewCreatedCallback = nullptr,
@@ -173,6 +174,29 @@ public:
         return m_webviewOption;
     }
 
+    bool GetCustomWindowRect()
+    {
+        return m_customWindowRect;
+    }
+
+    const RECT& GetWindowRect()
+    {
+        return m_windowRect;
+    }
+
+    bool GetShouldHaveToolbar()
+    {
+        return m_shouldHaveToolbar;
+    }
+
+    const std::wstring& GetInitialScript()
+    {
+        return m_initialScript;
+    }
+
+public:
+	void CloseAppWindow();
+
 private:
     static PCWSTR GetWindowClass();
 
@@ -199,7 +223,6 @@ private:
     void RestartApp();
     bool CloseWebView(bool cleanupUserDataFolder = false);
     void CleanupUserDataFolder();
-    void CloseAppWindow();
     void ChangeLanguage();
     void UpdateCreationModeMenu();
     void ToggleAADSSO();
@@ -230,14 +253,18 @@ private:
     //  or "none" to mean don't perform an initial navigate,
     //  or a valid absolute URI to which we will navigate.
     std::wstring m_initialUri;
+    std::wstring m_initialScript;
     std::wstring m_userDataFolder;
     HWND m_mainWindow = nullptr;
     Toolbar m_toolbar;
+    bool m_shouldHaveToolbar;
     std::function<void()> m_onWebViewFirstInitialized;
     std::function<void()> m_onAppWindowClosing;
     DWORD m_creationModeId = 0;
     int m_refCount = 1;
     bool m_isClosed = false;
+    bool m_customWindowRect;
+    RECT m_windowRect;
 
     // The following is state that belongs with the webview, and should
     // be reinitialized along with it. Everything here is undefined when

@@ -12,6 +12,8 @@
 #include <shobjidl.h>
 #include <string.h>
 #include <vector>
+#include <fstream>
+#include <sstream>
 
 #include "AppWindow.h"
 #include "DpiUtil.h"
@@ -41,6 +43,7 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
     std::wstring appId(L"EBWebView.SampleApp");
     std::wstring userDataFolder(L"");
     std::wstring initialUri;
+    std::wstring initialScript;
     DWORD creationModeId = IDM_CREATION_MODE_WINDOWED;
 
     if (lpCmdLine && lpCmdLine[0])
@@ -115,14 +118,41 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
                 }
 #endif
             }
+            else if (NEXT_PARAM_CONTAINS(L"initialScript="))
+            {
+                initialScript = nextParam.substr(nextParam.find(L'=') + 1);
+                
+                //std::wstring filepath = nextParam.substr(nextParam.find(L'=') + 1);
+
+                //std::wifstream fin(filepath.c_str());
+                //if (fin.good())
+                //{
+                //    std::wstringstream ssContent;
+                //    ssContent << fin.rdbuf();
+                //    initialScript = ssContent.str();
+                //    fin.close();
+                //}
+            }
         }
         LocalFree(params);
     }
+
     SetCurrentProcessExplicitAppUserModelID(appId.c_str());
 
     DpiUtil::SetProcessDpiAwarenessContext(dpiAwarenessContext);
 
-    new AppWindow(creationModeId, WebViewCreateOption(), initialUri, userDataFolder, true);
+    RECT winRc = { 0 };
+    winRc.left = 0;
+    winRc.top = 0;
+    winRc.right = 800;
+    winRc.bottom = 600;
+    new AppWindow(creationModeId, WebViewCreateOption(), initialUri, initialScript, userDataFolder, true, nullptr, false, winRc,
+#ifdef _DEBUG
+        true
+#else
+        false
+#endif
+    );
 
     int retVal = RunMessagePump();
 

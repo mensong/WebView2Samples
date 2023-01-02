@@ -262,9 +262,7 @@ void ScriptComponent::AddInitializeScript()
     // This example script stops child frames from opening new windows.  Because
     // the initialization script runs before any script in the HTML document, we
     // can trust the results of our checks on window.parent and window.top.
-        L"if (window.parent !== window.top) {\r\n"
-        L"    delete window.open;\r\n"
-        L"}");
+        L"alert('hello')");
     if (dialog.confirmed)
     {
         m_webView->AddScriptToExecuteOnDocumentCreated(
