@@ -5,6 +5,7 @@
 #include "stdafx.h"
 
 #include "HostObjectSampleImpl.h"
+#include <Windows.h>
 #include "CheckFailure.h"
 #include <fstream>
 #include <sstream>
@@ -43,7 +44,7 @@ STDMETHODIMP HostObjectSample::CallExtend(BSTR stringPluginName, BSTR stringMeth
 
 STDMETHODIMP HostObjectSample::LoadPlugins(BSTR stringDllPath, BSTR* stringPluginsName)
 {
-    HMODULE h = LoadLibraryW(stringDllPath);
+    HMODULE h = LoadLibraryW(findFile(stringDllPath).c_str());
     if (h == NULL)
         return E_ACCESSDENIED;
 
@@ -103,8 +104,8 @@ STDMETHODIMP HostObjectSample::LoadPlugins(BSTR stringDllPath, BSTR* stringPlugi
 }
 
 STDMETHODIMP HostObjectSample::LoadScript(BSTR stringFilePath)
-{
-    std::wifstream fin(stringFilePath);
+{    
+    std::wifstream fin(findFile(stringFilePath));
     if (fin.good())
     {
         std::wstringstream ssContent;
@@ -236,4 +237,24 @@ STDMETHODIMP HostObjectSample::Invoke(
     RETURN_IF_FAILED(GetTypeInfo(0, lcid, &typeInfo));
     return typeInfo->Invoke(
         this, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+std::wstring HostObjectSample::findFile(const std::wstring& filename)
+{
+    WIN32_FIND_DATAW wfd = { 0 };
+    if (INVALID_HANDLE_VALUE == ::FindFirstFileW(filename.c_str(), &wfd))
+    {//find in exe dir
+        WCHAR exeFilePath[MAX_PATH];
+        GetModuleFileNameW(NULL, exeFilePath, MAX_PATH);
+        std::wstring newFileName(exeFilePath);
+        size_t idx = newFileName.find_last_of('\\');
+        newFileName = newFileName.substr(0, idx) + L"\\" + filename;
+        if (INVALID_HANDLE_VALUE != ::FindFirstFileW(newFileName.c_str(), &wfd))
+            return newFileName;
+    }
+    else
+    {
+        return filename;
+    }
+    return L"";
 }

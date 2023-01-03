@@ -180,7 +180,7 @@ PCWSTR AppWindow::GetWindowClass()
     // Only do this once
     static PCWSTR windowClass = [] {
         static WCHAR windowClass[s_maxLoadString];
-        LoadStringW(g_hInstance, IDC_WEBVIEW2APISAMPLE, windowClass, s_maxLoadString);
+        LoadStringW(g_hInstance, IDC_WEBVIEW2HOST, windowClass, s_maxLoadString);
 
         WNDCLASSEXW wcex;
         wcex.cbSize = sizeof(WNDCLASSEX);
@@ -190,10 +190,10 @@ PCWSTR AppWindow::GetWindowClass()
         wcex.cbClsExtra = 0;
         wcex.cbWndExtra = 0;
         wcex.hInstance = g_hInstance;
-        wcex.hIcon = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_WEBVIEW2APISAMPLE));
+        wcex.hIcon = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_WEBVIEW2HOST));
         wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
         wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-        wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_WEBVIEW2APISAMPLE);
+        wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_WEBVIEW2HOST);
         wcex.lpszClassName = windowClass;
         wcex.hIconSm = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_SMALL));
 

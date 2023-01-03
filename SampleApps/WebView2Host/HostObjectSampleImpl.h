@@ -68,6 +68,9 @@ public:
         DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams,
         VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr) override;
 
+protected:
+    std::wstring findFile(const std::wstring& filename);
+
 private:
     std::wstring m_propertyValue;
     std::map<INT, std::wstring> m_propertyValues;

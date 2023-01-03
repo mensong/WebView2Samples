@@ -59,7 +59,8 @@ ViewComponent::ViewComponent(
                 double zoomFactor;
                 CHECK_FAILURE(sender->get_ZoomFactor(&zoomFactor));
 
-                UpdateDocumentTitle(m_appWindow, L" (Zoom: ", zoomFactor);
+                //UpdateDocumentTitle(m_appWindow, L" (Zoom: ", zoomFactor);
+
                 return S_OK;
             })
         .Get(),
@@ -125,8 +126,9 @@ ViewComponent::ViewComponent(
                     double rasterizationScale;
                     CHECK_FAILURE(m_controller3->get_RasterizationScale(&rasterizationScale));
 
-                    UpdateDocumentTitle(
-                        m_appWindow, L" (RasterizationScale: ", rasterizationScale);
+                    //UpdateDocumentTitle(
+                    //    m_appWindow, L" (RasterizationScale: ", rasterizationScale);
+
                     return S_OK;
                 })
             .Get(), &m_rasterizationScaleChangedToken));

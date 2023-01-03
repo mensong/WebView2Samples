@@ -271,7 +271,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="WebView2APISample.rc">
+    <ResourceCompile Include="WebView2Host.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
@@ -308,13 +308,13 @@
     <Image Include="small.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="WebView2APISample.ico">
+    <Image Include="WebView2Host.ico">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="AppBackground.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="WebView2APISample_Inprivate.ico">
+    <Image Include="WebView2Host_Inprivate.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

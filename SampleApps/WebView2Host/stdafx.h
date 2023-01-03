@@ -24,3 +24,5 @@
 std::wstring AnsiToUnicode(const std::string& multiByteStr);
 //½«Unicode×Ö·û×ª»»ÎªAnsi×Ö·û´®
 std::string UnicodeToAnsi(const std::wstring& wideByteRet);
+
+//#define USE_FIXED_WEBVIEW2_RUNTIME

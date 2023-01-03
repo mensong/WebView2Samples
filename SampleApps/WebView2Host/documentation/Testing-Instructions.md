@@ -1,6 +1,6 @@
 # WebView2 API Testing Instructions
 
-These are instructions for manually testing all the features of the WebView2 API using the WebView2APISample app.
+These are instructions for manually testing all the features of the WebView2 API using the WebView2Host app.
 
 ## Table Of Contents
 
@@ -96,7 +96,7 @@ These are instructions for manually testing all the features of the WebView2 API
 
 1. Open Visual Studio
 2. Go to `View -> Other Windows -> Package Manager Console`
-3. Select `WebView2APISample` as Default project
+3. Select `WebView2Host` as Default project
 4. Run:
 
     ```powershell
@@ -1014,8 +1014,8 @@ Test that verifies `DOMContentLoaded` event is raised after the DOM is loaded wh
 1. Open VSCode, go to `View -> Extensions` and install the debugger:
     1. [JavaScript Debugger Nightly](https://github.com/microsoft/vscode-js-debug)
     ![new-debugging-tool](screenshots/new-script-debugging-tool.png)
-1. Go to `File -> Open Folder` and open `WebView2APISample/` (where `.vscode/` lives)
-1. Open files `ScenarioJavaScripDebugIndex.js` and `ScenarioTypeScripDebugIndex.ts` from the assets folder (e.g. `WebView2APISample/assets/ScenarioJavaScripDebugIndex.js`)
+1. Go to `File -> Open Folder` and open `WebView2Host/` (where `.vscode/` lives)
+1. Open files `ScenarioJavaScripDebugIndex.js` and `ScenarioTypeScripDebugIndex.ts` from the assets folder (e.g. `WebView2Host/assets/ScenarioJavaScripDebugIndex.js`)
 1. Set breakpoints at `function OnAddClick()` in `ScenarioJavaScripDebugIndex.js` and `function OnHeaderClick()` in `ScenarioTypeScripDebugIndex.ts`
 1. Go to Debug tab via `View -> Run`
 
@@ -1058,7 +1058,7 @@ Test Single WebView Script Debugging with **both** [Visual Studio Code's built-i
 1. Go to Debug tab via `View -> Run`
 1. On the top drop down, select `$(Debugger): Attach to Edge`. (e.g. `Debugger For Microsoft Edge: Attach to Edge` and `JavaScript Debugger(Nightly): Attach to Edge`)
 1. Press `F5` or click the green Button (GO) to Start Debugging
-1. Launch `WebView2APISample.exe` from the output folder `$(Configuration)/$(Platform)/` (e.g. `Release/x64/`)
+1. Launch `WebView2Host.exe` from the output folder `$(Configuration)/$(Platform)/` (e.g. `Release/x64/`)
 1. VM\* error page may launch, just ignore and click go. (Ignore VM\* file in general and click go at any stage).
 1. Go to `Scenario -> Script Debugging -> JavaScript`
 1. Click `Add a new item`
@@ -1075,7 +1075,7 @@ Test Single WebView Script Debugging with **both** [Visual Studio Code's built-i
 1. Go to Debug tab via `View -> Run`
 1. On the top drop down, select `$(Debugger): Attach to Edge`. (e.g. `Debugger For Microsoft Edge: Attach to Edge` and `JavaScript Debugger(Nightly): Attach to Edge`)
 1. Press `F5` or click the green Button (GO) to Start Debugging
-1. Launch `WebView2APISample.exe` from the output folder `$(Configuration)/$(Platform)/` (e.g. `Release/x64/`)
+1. Launch `WebView2Host.exe` from the output folder `$(Configuration)/$(Platform)/` (e.g. `Release/x64/`)
 1. VM\* error page may launch, just ignore and click go. (Ignore VM\* file in general and click go at any stage).
 1. Go to `Scenario -> Script Debugging -> TypeScript`
 1. Click `Get the Current Page Header`
@@ -1090,7 +1090,7 @@ Test Single WebView JavaScript Debugging:
   ![step 1](screenshots/vs-javascript-diagnostics.png)
 2. Open VS, go to `properties -> Debugging -> Debugger Type -> JavaScript(WebView2)`, make sure `JavaScript(WebView2)` is selected.
   ![step 2](screenshots/vs-script-debugging-set-up.png)
-3. Go to same folder where sample app `WebView2APISample.exe` lives and open file `ScenarioJavaScripDebugIndex.js` from the same folder. Set a breakpoint on `function OnAddClick()`
+3. Go to same folder where sample app `WebView2Host.exe` lives and open file `ScenarioJavaScripDebugIndex.js` from the same folder. Set a breakpoint on `function OnAddClick()`
 4. Then launch the sample app.
 5. VM\* error page may launch, just ignore and click go. (Ignore VM\* file in general and click go at any stage).
 6. Go to `Scenario -> Script Debugging -> JavaScript`
@@ -1104,7 +1104,7 @@ Test Single WebView JavaScript Debugging:
   ![step 1](screenshots/vs-javascript-diagnostics.png)
 2. Open VS, go to `properties -> Debugging -> Debugger Type -> JavaScript(WebView2)`, make sure `JavaScript(WebView2)` is selected.
   ![step 2](screenshots/vs-script-debugging-set-up.png)
-3. Go to same folder where sample app `WebView2APISample.exe` lives and open file `ScenarioTypeScripDebugIndex.ts` from the same folder. Set a breakpoint on `function onHeaderClick()`
+3. Go to same folder where sample app `WebView2Host.exe` lives and open file `ScenarioTypeScripDebugIndex.ts` from the same folder. Set a breakpoint on `function onHeaderClick()`
 4. Then launch the sample app.
 5. VM\* error page may launch, just ignore and click go. (Ignore VM\* file in general and click go at any stage).
 6. Go to `Scenario -> Script Debugging -> TypeScript`

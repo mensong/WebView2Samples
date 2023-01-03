@@ -287,7 +287,7 @@ PCWSTR AppWindow::GetWindowClass()
 	// Only do this once
 	static PCWSTR windowClass = [] {
 		static WCHAR windowClass[s_maxLoadString];
-		LoadStringW(g_hInstance, IDC_WEBVIEW2APISAMPLE, windowClass, s_maxLoadString);
+		LoadStringW(g_hInstance, IDC_WEBVIEW2HOST, windowClass, s_maxLoadString);
 
 		WNDCLASSEXW wcex;
 		wcex.cbSize = sizeof(WNDCLASSEX);
@@ -297,11 +297,11 @@ PCWSTR AppWindow::GetWindowClass()
 		wcex.cbClsExtra = 0;
 		wcex.cbWndExtra = 0;
 		wcex.hInstance = g_hInstance;
-		wcex.hIcon = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_WEBVIEW2APISAMPLE));
+		wcex.hIcon = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_WEBVIEW2HOST));
 		wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 #ifdef _DEBUG
-		wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_WEBVIEW2APISAMPLE);
+		wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_WEBVIEW2HOST);
 #else
 		wcex.lpszMenuName = NULL;
 #endif // DEBUG        
@@ -1229,7 +1229,7 @@ void AppWindow::InitializeWebView()
 	Microsoft::WRL::ComPtr<ICoreWebView2ExperimentalEnvironmentOptions> optionsExperimental;
 	if (options.As(&optionsExperimental) == S_OK)
 	{
-		const WCHAR* allowedOrigins[1] = { L"https://*.example.com" };
+		const WCHAR* allowedOrigins[1] = { L"*" };
 
 		auto customSchemeRegistration =
 			Microsoft::WRL::Make<CoreWebView2CustomSchemeRegistration>(L"custom-scheme");
@@ -1433,17 +1433,17 @@ void AppWindow::SetAppIcon(bool inPrivate)
 	if (inPrivate)
 	{
 		static HICON smallInPrivateIcon = reinterpret_cast<HICON>(LoadImage(
-			g_hInstance, MAKEINTRESOURCEW(IDI_WEBVIEW2APISAMPLE_INPRIVATE), IMAGE_ICON, 16, 16,
+			g_hInstance, MAKEINTRESOURCEW(IDI_WEBVIEW2HOST_INPRIVATE), IMAGE_ICON, 16, 16,
 			LR_DEFAULTCOLOR));
 		static HICON bigInPrivateIcon = reinterpret_cast<HICON>(LoadImage(
-			g_hInstance, MAKEINTRESOURCEW(IDI_WEBVIEW2APISAMPLE_INPRIVATE), IMAGE_ICON, 32, 32,
+			g_hInstance, MAKEINTRESOURCEW(IDI_WEBVIEW2HOST_INPRIVATE), IMAGE_ICON, 32, 32,
 			LR_DEFAULTCOLOR));
 		newSmallIcon = smallInPrivateIcon;
 		newBigIcon = bigInPrivateIcon;
 	}
 	else
 	{
-		static HICON smallIcon = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_WEBVIEW2APISAMPLE));
+		static HICON smallIcon = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_WEBVIEW2HOST));
 		static HICON bigIcon = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_SMALL));
 		newSmallIcon = smallIcon;
 		newBigIcon = bigIcon;
@@ -1552,7 +1552,8 @@ HRESULT AppWindow::OnCreateCoreWebView2ControllerCompleted(HRESULT result, ICore
 		if (m_initialUri != L"none")
 		{
 			std::wstring initialUri = m_initialUri.empty() ? AppStartPage::GetUri(this) : m_initialUri;
-			CHECK_FAILURE(m_webView->Navigate(initialUri.c_str()));
+			if (!initialUri.empty())
+				CHECK_FAILURE(m_webView->Navigate(initialUri.c_str()));
 		}
 	}
 	else if (result == E_ABORT)
@@ -1803,7 +1804,7 @@ void AppWindow::RegisterEventHandlers()
 			ICoreWebView2NavigationCompletedEventArgs* args) {
 				
 		sender->ExecuteScript(
-			L"\nwindow.CallExtend = function(stringPluginName, stringMethodName, stringParameters){return chrome.webview.hostObjects.sync.sample.Call(stringPluginName, stringMethodName, stringParameters);}"
+			L"\nwindow.CallExtend = function(stringPluginName, stringMethodName, stringParameters){return chrome.webview.hostObjects.sync.sample.CallExtend(stringPluginName, stringMethodName, stringParameters);}"
 			L"\nwindow.LoadPlugins = function(stringDllPath){return chrome.webview.hostObjects.sync.sample.LoadPlugins(stringDllPath);}"
 			L"\nwindow.LoadScript = function(stringFilePath){return chrome.webview.hostObjects.sync.sample.LoadScript(stringFilePath);}"
 			, Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
@@ -1818,6 +1819,7 @@ void AppWindow::RegisterEventHandlers()
 			}
 			return S_OK;
 		}).Get());
+
 		return S_OK;
 	}).Get(),
 		nullptr));

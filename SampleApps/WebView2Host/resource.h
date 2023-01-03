@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by WebView2APISample.rc
+// Used by WebView2Host.rc
 //
 // clang-format off
 #define IDC_MYICON                      2
@@ -8,9 +8,9 @@
 #define IDD_ABOUTBOX                    103
 #define IDM_ABOUT                       104
 #define IDM_EXIT                        105
-#define IDI_WEBVIEW2APISAMPLE           107
+#define IDI_WEBVIEW2HOST                107
 #define IDI_SMALL                       108
-#define IDC_WEBVIEW2APISAMPLE           109
+#define IDC_WEBVIEW2HOST                109
 #define IDC_WEBVIEW2APISAMPLEHOST       110
 #define IDM_ZOOM_05                     111
 #define IDM_ZOOM_10                     112
@@ -96,7 +96,7 @@
 #define IDC_EDIT_PROFILE                227
 #define IDC_CHECK_INPRIVATE             228
 #define IDM_CREATE_WITH_OPTION          229
-#define IDI_WEBVIEW2APISAMPLE_INPRIVATE 230
+#define IDI_WEBVIEW2HOST_INPRIVATE      230
 #define IDM_TOGGLE_MUTE_STATE           231
 #define IDM_PERFORMANCE_INFO            232
 #define IDM_PRINT_TO_PDF_PORTRAIT       235

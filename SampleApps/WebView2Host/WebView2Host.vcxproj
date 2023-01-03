@@ -55,6 +55,7 @@
     <ProjectGuid>{4F0CEEF3-12B3-425E-9BB0-105200411592}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>WebView2Host</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -174,59 +175,67 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)tmp\$(Configuration)\$(Platform)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <TargetName>$(ProjectName)_Win7</TargetName>
+    <IntDir>$(ProjectDir)tmp\$(Configuration)\$(Platform)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)tmp\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <TargetName>$(ProjectName)_Win7</TargetName>
+    <IntDir>$(ProjectDir)tmp\$(Configuration)\$(Platform)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\</OutDir>
     <TargetName>$(ProjectName)</TargetName>
+    <IntDir>$(ProjectDir)tmp\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|ARM64'">
     <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\</OutDir>
-    <TargetName>$(ProjectName)_Win7</TargetName>
+    <TargetName>$(ProjectName)</TargetName>
+    <IntDir>$(ProjectDir)tmp\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(ProjectDir)tmp\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|ARM64'">
     <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\</OutDir>
-    <TargetName>$(ProjectName)_Win7</TargetName>
+    <TargetName>$(ProjectName)</TargetName>
+    <IntDir>$(ProjectDir)tmp\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\</OutDir>
     <TargetName>$(ProjectName)</TargetName>
+    <IntDir>$(ProjectDir)tmp\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|x64'">
     <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\</OutDir>
-    <TargetName>$(ProjectName)_Win7</TargetName>
+    <TargetName>$(ProjectName)</TargetName>
+    <IntDir>$(ProjectDir)tmp\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(ProjectDir)tmp\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\</OutDir>
-    <TargetName>$(ProjectName)_Win7</TargetName>
+    <TargetName>$(ProjectName)</TargetName>
+    <IntDir>$(ProjectDir)tmp\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>USE_FIXED_WEBVIEW2_RUNTIME;USE_WEBVIEW2_WIN10;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_WEBVIEW2_WIN10;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -248,7 +257,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>USE_FIXED_WEBVIEW2_RUNTIME;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -268,7 +277,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>USE_FIXED_WEBVIEW2_RUNTIME;USE_WEBVIEW2_WIN10;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_WEBVIEW2_WIN10;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -289,7 +298,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>USE_FIXED_WEBVIEW2_RUNTIME;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -523,13 +532,13 @@
     <ClCompile Include="WebViewApi.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="WebView2APISample.rc" />
+    <ResourceCompile Include="WebView2Host.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="AppBackground.bmp" />
     <Image Include="small.ico" />
-    <Image Include="WebView2APISample.ico" />
-    <Image Include="WebView2APISample_Inprivate.ico" />
+    <Image Include="WebView2Host.ico" />
+    <Image Include="WebView2Host_Inprivate.ico" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="assets/AppStartPageBackground.png">
@@ -601,7 +610,7 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="HostObjectSample.idl" TypeLibraryName="$(OutDir)WebView2APISample.tlb">
+    <Midl Include="HostObjectSample.idl" TypeLibraryName="$(OutDir)WebView2Host.tlb">
       <TypeLibraryName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)$(TargetName).tlb</TypeLibraryName>
       <TypeLibraryName Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">$(OutDir)$(TargetName).tlb</TypeLibraryName>
       <TypeLibraryName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)$(TargetName).tlb</TypeLibraryName>
