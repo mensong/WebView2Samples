@@ -17,6 +17,7 @@ class AppWindow;
 
 typedef HRESULT(*FN_ExecuteScript)(AppWindow* appWindow, BSTR stringScript, BSTR* stringResult);
 typedef void (*FN_CloseApp)(AppWindow* appWindow);
+typedef HWND (*FN_GetHWND)(AppWindow* appWindow);
 
 #define DEF_PROC(hDll, name) \
 	name = (FN_##name)::GetProcAddress(hDll, #name)
@@ -55,7 +56,8 @@ public:
 		{
 			HMODULE __hDll__ = (hDll);
 			DEF_PROC(__hDll__, ExecuteScript);
-			DEF_PROC(__hDll__, CloseApp);
+			DEF_PROC(__hDll__, CloseApp); 
+			DEF_PROC(__hDll__, GetHWND);
 
 		}
 		else
@@ -75,6 +77,7 @@ public:
 
 	FN_ExecuteScript			ExecuteScript;
 	FN_CloseApp					CloseApp;
+	FN_GetHWND					GetHWND;
 
 	HMODULE hDll;
 };

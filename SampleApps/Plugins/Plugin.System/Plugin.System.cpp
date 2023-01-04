@@ -99,8 +99,8 @@ PLUGIN_API HRESULT setIcon(class AppWindow* appWindow, BSTR stringParamters, BST
 	if (hicon == NULL)
 		return E_FAIL;
 	
-	//SendMessage(wkeGetWindowHandle(app->window), WM_SETICON, TRUE, (LPARAM)hicon);
-	//SendMessage(wkeGetWindowHandle(app->window), WM_SETICON, FALSE, (LPARAM)hicon);
+	SendMessage(WebViewApi::Ins().GetHWND(appWindow), WM_SETICON, TRUE, (LPARAM)hicon);
+	SendMessage(WebViewApi::Ins().GetHWND(appWindow), WM_SETICON, FALSE, (LPARAM)hicon);
 
 	return S_OK;
 }

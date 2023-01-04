@@ -179,9 +179,9 @@ public:
         return m_customWindowRect;
     }
 
-    const RECT& GetWindowRect()
+    const RECT& GetInitialWindowRect()
     {
-        return m_windowRect;
+        return m_initialWindowRect;
     }
 
     bool GetShouldHaveToolbar()
@@ -202,15 +202,14 @@ private:
 
     static INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
-    static LRESULT CALLBACK
-    WndProcStatic(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-    bool HandleWindowMessage(
-        HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* result);
+    static LRESULT CALLBACK WndProcStatic(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    bool HandleWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* result);
 
     bool ExecuteWebViewCommands(WPARAM wParam, LPARAM lParam);
     bool ExecuteAppCommands(WPARAM wParam, LPARAM lParam);
 
     void ResizeEverything();
+    void ResizeWebView(const RECT& bounds);
     void InitializeWebView();
     HRESULT CreateControllerWithOptions();
     void SetAppIcon(bool inPrivate);
@@ -264,13 +263,14 @@ private:
     int m_refCount = 1;
     bool m_isClosed = false;
     bool m_customWindowRect;
-    RECT m_windowRect;
+    RECT m_initialWindowRect;
 
     // The following is state that belongs with the webview, and should
     // be reinitialized along with it. Everything here is undefined when
     // m_webView is null.
     wil::com_ptr<ICoreWebView2Environment> m_webViewEnvironment;
     wil::com_ptr<ICoreWebView2Controller> m_controller;
+    wil::com_ptr<ICoreWebView2CompositionController> m_compositionController;
     wil::com_ptr<ICoreWebView2> m_webView;
     wil::com_ptr<ICoreWebView2_3> m_webView3;
 

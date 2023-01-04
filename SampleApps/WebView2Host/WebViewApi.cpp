@@ -28,8 +28,7 @@ WEBVIEW_API HRESULT ExecuteScript(AppWindow* appWindow, BSTR stringScript, BSTR*
 			[&res, &stringResult](HRESULT error, PCWSTR result) -> HRESULT
 	{
 		res = error;
-	*stringResult = (BSTR)result;
-	return S_OK;
+		return S_OK;
 	}).Get());
 	return res;
 }
@@ -37,4 +36,9 @@ WEBVIEW_API HRESULT ExecuteScript(AppWindow* appWindow, BSTR stringScript, BSTR*
 WEBVIEW_API void CloseApp(AppWindow* appWindow)
 {
 	appWindow->CloseAppWindow();
+}
+
+WEBVIEW_API HWND GetHWND(AppWindow* appWindow)
+{
+	return appWindow->GetMainWindow();
 }

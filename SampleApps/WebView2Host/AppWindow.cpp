@@ -195,7 +195,7 @@ AppWindow::AppWindow(
 	, m_onWebViewFirstInitialized(webviewCreatedCallback)
 	, m_shouldHaveToolbar(shouldHaveToolbar)
 	, m_customWindowRect(customWindowRect)
-	, m_windowRect(windowRect)
+	, m_initialWindowRect(windowRect)
 {
 	// Initialize COM as STA.
 	CHECK_FAILURE(OleInitialize(NULL));
@@ -215,7 +215,7 @@ AppWindow::AppWindow(
 	{
 		m_mainWindow = CreateWindowExW(
 			WS_EX_CONTROLPARENT, GetWindowClass(), szTitle, WS_OVERLAPPEDWINDOW,
-			m_windowRect.left, m_windowRect.top, m_windowRect.right - m_windowRect.left, m_windowRect.bottom - m_windowRect.top,
+			m_initialWindowRect.left, m_initialWindowRect.top, m_initialWindowRect.right - m_initialWindowRect.left, m_initialWindowRect.bottom - m_initialWindowRect.top,
 			nullptr, nullptr, g_hInstance, nullptr);
 	}
 	else
@@ -690,19 +690,19 @@ bool AppWindow::ExecuteAppCommands(WPARAM wParam, LPARAM lParam)
 				[this](HRESULT errorCode,
 					ICoreWebView2ExperimentalUpdateRuntimeResult* result) -> HRESULT {
 			HRESULT updateError = E_FAIL;
-		COREWEBVIEW2_UPDATE_RUNTIME_STATUS status =
-			COREWEBVIEW2_UPDATE_RUNTIME_STATUS_FAILED;
-		if ((errorCode == S_OK) && result)
-		{
-			CHECK_FAILURE(result->get_Status(&status));
-			CHECK_FAILURE(result->get_ExtendedError(&updateError));
-		}
-		std::wstringstream formattedMessage;
-		formattedMessage << "UpdateRuntime result (0x" << std::hex << errorCode
-			<< "), status(" << status << "), extendedError("
-			<< updateError << ")";
-		AsyncMessageBox(std::move(formattedMessage.str()), L"UpdateRuntimeResult");
-		return S_OK;
+			COREWEBVIEW2_UPDATE_RUNTIME_STATUS status =
+				COREWEBVIEW2_UPDATE_RUNTIME_STATUS_FAILED;
+			if ((errorCode == S_OK) && result)
+			{
+				CHECK_FAILURE(result->get_Status(&status));
+				CHECK_FAILURE(result->get_ExtendedError(&updateError));
+			}
+			std::wstringstream formattedMessage;
+			formattedMessage << "UpdateRuntime result (0x" << std::hex << errorCode
+				<< "), status(" << status << "), extendedError("
+				<< updateError << ")";
+			AsyncMessageBox(std::move(formattedMessage.str()), L"UpdateRuntimeResult");
+			return S_OK;
 		}).Get());
 		if (FAILED(hr))
 			ShowFailure(hr, L"Call to UpdateRuntime failed");
@@ -810,7 +810,7 @@ bool AppWindow::ClearBrowsingData(COREWEBVIEW2_BROWSING_DATA_KINDS dataKinds)
 		Callback<ICoreWebView2ClearBrowsingDataCompletedHandler>(
 			[this](HRESULT error) -> HRESULT {
 		AsyncMessageBox(L"Completed", L"Clear Browsing Data");
-	return S_OK;
+		return S_OK;
 	}).Get()));
 	return true;
 }
@@ -911,32 +911,32 @@ bool AppWindow::PrintToDefaultPrinter()
 			this](HRESULT errorCode, COREWEBVIEW2_PRINT_STATUS printStatus) -> HRESULT
 	{
 		std::wstring message = L"";
-	if (errorCode == S_OK &&
-		printStatus == COREWEBVIEW2_PRINT_STATUS_SUCCEEDED)
-	{
-		message = L"Printing " + std::wstring(title.get()) +
-			L" document to printer is succedded";
-	}
-	else if (
-		errorCode == S_OK &&
-		printStatus == COREWEBVIEW2_PRINT_STATUS_PRINTER_UNAVAILABLE)
-	{
-		message = L"Printer is not available, offline or error state";
-	}
-	else if (errorCode == E_ABORT)
-	{
-		message = L"Printing " + std::wstring(title.get()) +
-			L" document is in progress";
-	}
-	else
-	{
-		message = L"Printing " + std::wstring(title.get()) +
-			L" document to printer is failed";
-	}
+		if (errorCode == S_OK &&
+			printStatus == COREWEBVIEW2_PRINT_STATUS_SUCCEEDED)
+		{
+			message = L"Printing " + std::wstring(title.get()) +
+				L" document to printer is succedded";
+		}
+		else if (
+			errorCode == S_OK &&
+			printStatus == COREWEBVIEW2_PRINT_STATUS_PRINTER_UNAVAILABLE)
+		{
+			message = L"Printer is not available, offline or error state";
+		}
+		else if (errorCode == E_ABORT)
+		{
+			message = L"Printing " + std::wstring(title.get()) +
+				L" document is in progress";
+		}
+		else
+		{
+			message = L"Printing " + std::wstring(title.get()) +
+				L" document to printer is failed";
+		}
 
-	AsyncMessageBox(message, L"Print to default printer");
+		AsyncMessageBox(message, L"Print to default printer");
 
-	return S_OK;
+		return S_OK;
 	}).Get()));
 	return true;
 }
@@ -1037,36 +1037,36 @@ bool AppWindow::PrintToPrinter()
 			this](HRESULT errorCode, COREWEBVIEW2_PRINT_STATUS printStatus) -> HRESULT
 	{
 		std::wstring message = L"";
-	if (errorCode == S_OK && printStatus == COREWEBVIEW2_PRINT_STATUS_SUCCEEDED)
-	{
-		message = L"Printing " + std::wstring(title.get()) +
-			L" document to printer is succedded";
-	}
-	else if (
-		errorCode == S_OK &&
-		printStatus == COREWEBVIEW2_PRINT_STATUS_PRINTER_UNAVAILABLE)
-	{
-		message = L"Selected printer is not found, not available, offline or "
-			L"error state.";
-	}
-	else if (errorCode == E_INVALIDARG)
-	{
-		message = L"Invalid settings provided for the specified printer";
-	}
-	else if (errorCode == E_ABORT)
-	{
-		message = L"Printing " + std::wstring(title.get()) +
-			L" document already in progress";
-	}
-	else
-	{
-		message = L"Printing " + std::wstring(title.get()) +
-			L" document to printer is failed";
-	}
+		if (errorCode == S_OK && printStatus == COREWEBVIEW2_PRINT_STATUS_SUCCEEDED)
+		{
+			message = L"Printing " + std::wstring(title.get()) +
+				L" document to printer is succedded";
+		}
+		else if (
+			errorCode == S_OK &&
+			printStatus == COREWEBVIEW2_PRINT_STATUS_PRINTER_UNAVAILABLE)
+		{
+			message = L"Selected printer is not found, not available, offline or "
+				L"error state.";
+		}
+		else if (errorCode == E_INVALIDARG)
+		{
+			message = L"Invalid settings provided for the specified printer";
+		}
+		else if (errorCode == E_ABORT)
+		{
+			message = L"Printing " + std::wstring(title.get()) +
+				L" document already in progress";
+		}
+		else
+		{
+			message = L"Printing " + std::wstring(title.get()) +
+				L" document to printer is failed";
+		}
 
-	AsyncMessageBox(message, L"Print to printer");
+		AsyncMessageBox(message, L"Print to printer");
 
-	return S_OK;
+		return S_OK;
 	}).Get()));
 	return true;
 }
@@ -1096,13 +1096,13 @@ bool AppWindow::PrintToPdfStream()
 	{
 		DisplayPdfDataInPrintDialog(pdfData);
 
-	std::wstring message =
-		L"Printing " + std::wstring(title.get()) + L" document to PDF Stream " +
-		((errorCode == S_OK && pdfData != nullptr) ? L"succedded" : L"failed");
+		std::wstring message =
+			L"Printing " + std::wstring(title.get()) + L" document to PDF Stream " +
+			((errorCode == S_OK && pdfData != nullptr) ? L"succedded" : L"failed");
 
-	AsyncMessageBox(message, L"Print to PDF Stream");
+		AsyncMessageBox(message, L"Print to PDF Stream");
 
-	return S_OK;
+		return S_OK;
 	}).Get()));
 	return true;
 }
@@ -1332,7 +1332,7 @@ HRESULT AppWindow::OnCreateEnvironmentCompleted(
 			auto controller =
 			wil::com_ptr<ICoreWebView2CompositionController>(compositionController)
 				.query<ICoreWebView2Controller>();
-		return OnCreateCoreWebView2ControllerCompleted(result, controller.get());
+			return OnCreateCoreWebView2ControllerCompleted(result, controller.get());
 		}).Get()));
 	}
 	else
@@ -1500,20 +1500,30 @@ HRESULT AppWindow::OnCreateCoreWebView2ControllerCompleted(HRESULT result, ICore
 		//! [CoreWebView2Profile]
 		// Create components. These will be deleted when the WebView is closed.
 		NewComponent<ScenarioAddHostObject>(this);
+
+#ifdef _DEBUG
 		NewComponent<FileComponent>(this);
 		NewComponent<ProcessComponent>(this);
 		NewComponent<ScriptComponent>(this);
+		 
 		NewComponent<SettingsComponent>(
 			this, m_webViewEnvironment.get(), m_oldSettingsComponent.get());
 		m_oldSettingsComponent = nullptr;
+		
 		NewComponent<ViewComponent>(
 			this, m_dcompDevice.get(),
 #ifdef USE_WEBVIEW2_WIN10
 			m_wincompCompositor,
 #endif
 			(m_creationModeId == IDM_CREATION_MODE_TARGET_DCOMP));
+
 		NewComponent<AudioComponent>(this);
-		NewComponent<ControlComponent>(this, &m_toolbar);
+
+		if (GetShouldHaveToolbar())
+		{
+			NewComponent<ControlComponent>(this, &m_toolbar);
+		}
+#endif
 
 		m_webView3 = coreWebView2.try_query<ICoreWebView2_3>();
 		if (m_webView3)
@@ -1536,18 +1546,6 @@ HRESULT AppWindow::OnCreateCoreWebView2ControllerCompleted(HRESULT result, ICore
 			m_onWebViewFirstInitialized();
 			m_onWebViewFirstInitialized = nullptr;
 		}
-
-		//// Add initial script
-		//if (!m_initialScript.empty())
-		//{
-		//    m_webView->AddScriptToExecuteOnDocumentCreated(
-		//        m_initialScript.c_str(),
-		//        Callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler>(
-		//            [this](HRESULT error, PCWSTR id) -> HRESULT
-		//    {
-		//        return S_OK;
-		//    }).Get());
-		//}
 
 		if (m_initialUri != L"none")
 		{
@@ -1644,17 +1642,16 @@ void AppWindow::RegisterEventHandlers()
 	CHECK_FAILURE(m_webView->add_ContainsFullScreenElementChanged(
 		Callback<ICoreWebView2ContainsFullScreenElementChangedEventHandler>(
 			[this](ICoreWebView2* sender, IUnknown* args) -> HRESULT {
-		CHECK_FAILURE(
-			sender->get_ContainsFullScreenElement(&m_containsFullscreenElement));
-	if (m_containsFullscreenElement)
-	{
-		EnterFullScreen();
-	}
-	else
-	{
-		ExitFullScreen();
-	}
-	return S_OK;
+		CHECK_FAILURE(sender->get_ContainsFullScreenElement(&m_containsFullscreenElement));
+		if (m_containsFullscreenElement)
+		{
+			EnterFullScreen();
+		}
+		else
+		{
+			ExitFullScreen();
+		}
+		return S_OK;
 	}).Get(),
 		nullptr));
 	//! [ContainsFullScreenElementChanged]
@@ -1673,68 +1670,68 @@ void AppWindow::RegisterEventHandlers()
 			return S_OK;
 		}
 
-	AppWindow* newAppWindow;
+		AppWindow* newAppWindow;
 
-	//wil::com_ptr<ICoreWebView2WindowFeatures> windowFeatures;
-	//CHECK_FAILURE(args->get_WindowFeatures(&windowFeatures));
+		//wil::com_ptr<ICoreWebView2WindowFeatures> windowFeatures;
+		//CHECK_FAILURE(args->get_WindowFeatures(&windowFeatures));
 
-	//RECT windowRect = {0};
-	//UINT32 left = 0;
-	//UINT32 top = 0;
-	//UINT32 height = 0;
-	//UINT32 width = 0;
-	//BOOL shouldHaveToolbar = true;
+		//RECT windowRect = {0};
+		//UINT32 left = 0;
+		//UINT32 top = 0;
+		//UINT32 height = 0;
+		//UINT32 width = 0;
+		//BOOL shouldHaveToolbar = true;
 
-	//BOOL hasPosition = FALSE;
-	//BOOL hasSize = FALSE;
-	//CHECK_FAILURE(windowFeatures->get_HasPosition(&hasPosition));
-	//CHECK_FAILURE(windowFeatures->get_HasSize(&hasSize));
+		//BOOL hasPosition = FALSE;
+		//BOOL hasSize = FALSE;
+		//CHECK_FAILURE(windowFeatures->get_HasPosition(&hasPosition));
+		//CHECK_FAILURE(windowFeatures->get_HasSize(&hasSize));
 
-	//bool useDefaultWindow = true;
+		//bool useDefaultWindow = true;
 
-	//if (!!hasPosition && !!hasSize)
-	//{
-	//    CHECK_FAILURE(windowFeatures->get_Left(&left));
-	//    CHECK_FAILURE(windowFeatures->get_Top(&top));
-	//    CHECK_FAILURE(windowFeatures->get_Height(&height));
-	//    CHECK_FAILURE(windowFeatures->get_Width(&width));
-		//useDefaultWindow = false;
-	//}
-	//CHECK_FAILURE(windowFeatures->get_ShouldDisplayToolbar(&shouldHaveToolbar));
+		//if (!!hasPosition && !!hasSize)
+		//{
+		//    CHECK_FAILURE(windowFeatures->get_Left(&left));
+		//    CHECK_FAILURE(windowFeatures->get_Top(&top));
+		//    CHECK_FAILURE(windowFeatures->get_Height(&height));
+		//    CHECK_FAILURE(windowFeatures->get_Width(&width));
+			//useDefaultWindow = false;
+		//}
+		//CHECK_FAILURE(windowFeatures->get_ShouldDisplayToolbar(&shouldHaveToolbar));
 
-	//windowRect.left = left;
-	//windowRect.right =
-	//    left + (width < s_minNewWindowSize ? s_minNewWindowSize : width);
-	//windowRect.top = top;
-	//windowRect.bottom =
-	//    top + (height < s_minNewWindowSize ? s_minNewWindowSize : height);
+		//windowRect.left = left;
+		//windowRect.right =
+		//    left + (width < s_minNewWindowSize ? s_minNewWindowSize : width);
+		//windowRect.top = top;
+		//windowRect.bottom =
+		//    top + (height < s_minNewWindowSize ? s_minNewWindowSize : height);
 
-	// passing "none" as uri as its a noinitialnavigation
-	newAppWindow = new AppWindow(
-		m_creationModeId, GetWebViewOption(), L"none", m_initialScript, m_userDataFolder, false,
-		nullptr, m_customWindowRect, m_windowRect, m_shouldHaveToolbar);
+		// passing "none" as uri as its a noinitialnavigation
+		newAppWindow = new AppWindow(
+			m_creationModeId, GetWebViewOption(), L"none", m_initialScript, m_userDataFolder, false,
+			nullptr, m_customWindowRect, m_initialWindowRect, m_shouldHaveToolbar);
 
-	//if (!useDefaultWindow)
-	//{
-	//    newAppWindow = new AppWindow(
-	//        m_creationModeId, GetWebViewOption(), L"none", m_userDataFolder, false,
-	//        nullptr, true, windowRect, m_shouldHaveToolbar);
-	//}
-	//else
-	//{
-	//    newAppWindow = new AppWindow(m_creationModeId, GetWebViewOption(), L"none");
-	//}
+		//if (!useDefaultWindow)
+		//{
+		//    newAppWindow = new AppWindow(
+		//        m_creationModeId, GetWebViewOption(), L"none", m_userDataFolder, false,
+		//        nullptr, true, windowRect, m_shouldHaveToolbar);
+		//}
+		//else
+		//{
+		//    newAppWindow = new AppWindow(m_creationModeId, GetWebViewOption(), L"none");
+		//}
 
-	wil::com_ptr<ICoreWebView2Deferral> deferral;
-	CHECK_FAILURE(args->GetDeferral(&deferral));
+		wil::com_ptr<ICoreWebView2Deferral> deferral;
+		CHECK_FAILURE(args->GetDeferral(&deferral));
 
-	newAppWindow->m_isPopupWindow = true;
-	newAppWindow->m_onWebViewFirstInitialized = [args, deferral, newAppWindow]() {
-		CHECK_FAILURE(args->put_NewWindow(newAppWindow->m_webView.get()));
-		CHECK_FAILURE(args->put_Handled(TRUE));
-		CHECK_FAILURE(deferral->Complete());
-	};
-	return S_OK;
+		newAppWindow->m_isPopupWindow = true;
+		newAppWindow->m_onWebViewFirstInitialized = [args, deferral, newAppWindow]() {
+			CHECK_FAILURE(args->put_NewWindow(newAppWindow->m_webView.get()));
+			CHECK_FAILURE(args->put_Handled(TRUE));
+			CHECK_FAILURE(deferral->Complete());
+		};
+		return S_OK;
 	}).Get(),
 		nullptr));
 	//! [NewWindowRequested]
@@ -1750,7 +1747,7 @@ void AppWindow::RegisterEventHandlers()
 		{
 			CloseAppWindow();
 		}
-	return S_OK;
+		return S_OK;
 	}).Get(),
 		nullptr));
 	//! [WindowCloseRequested]
@@ -1790,7 +1787,7 @@ void AppWindow::RegisterEventHandlers()
 		}
 		});
 
-	return S_OK;
+		return S_OK;
 	}).Get(),
 		nullptr));
 	//! [NewBrowserVersionAvailable]
@@ -1826,6 +1823,25 @@ void AppWindow::RegisterEventHandlers()
 	//! [NavigationCompleted]
 }
 
+//! [ResizeWebView]
+// Update the bounds of the WebView window to fit available space.
+void AppWindow::ResizeWebView(const RECT& bounds)
+{
+	SIZE webViewSize = {
+			LONG((bounds.right - bounds.left) * 1.0f/* m_webViewRatio * m_webViewScale*/),
+			LONG((bounds.bottom - bounds.top) * 1.0f/* m_webViewRatio * m_webViewScale*/) };
+
+	RECT desiredBounds = bounds;
+	desiredBounds.bottom = LONG(
+		webViewSize.cy + bounds.top);
+	desiredBounds.right = LONG(
+		webViewSize.cx + bounds.left);
+
+	if (m_controller)
+		m_controller->put_Bounds(desiredBounds);
+}
+//! [ResizeWebView]
+
 // Updates the sizing and positioning of everything in the window.
 void AppWindow::ResizeEverything()
 {
@@ -1837,10 +1853,13 @@ void AppWindow::ResizeEverything()
 		availableBounds = m_toolbar.Resize(availableBounds);
 	}
 
+	ResizeWebView(availableBounds);
+
 	if (auto view = GetComponent<ViewComponent>())
 	{
 		view->SetBounds(availableBounds);
 	}
+
 	m_appBackgroundImageRect = availableBounds;
 }
 
@@ -1882,42 +1901,42 @@ bool AppWindow::CloseWebView(bool cleanupUserDataFolder)
 					ICoreWebView2Environment* sender,
 					ICoreWebView2BrowserProcessExitedEventArgs* args) {
 			COREWEBVIEW2_BROWSER_PROCESS_EXIT_KIND kind;
-		UINT32 pid;
-		CHECK_FAILURE(args->get_BrowserProcessExitKind(&kind));
-		CHECK_FAILURE(args->get_BrowserProcessId(&pid));
+			UINT32 pid;
+			CHECK_FAILURE(args->get_BrowserProcessExitKind(&kind));
+			CHECK_FAILURE(args->get_BrowserProcessId(&pid));
 
-		// If a new WebView is created from this CoreWebView2Environment after
-		// the browser has exited but before our handler gets to run, a new
-		// browser process will be created and lock the user data folder
-		// again. Do not attempt to cleanup the user data folder in these
-		// cases. We check the PID of the exited browser process against the
-		// PID of the browser process to which our last CoreWebView2 attached.
-		if (pid == m_newestBrowserPid)
-		{
-			// Watch for graceful browser process exit. Let ProcessFailed event
-			// handler take care of failed browser process termination.
-			if (kind == COREWEBVIEW2_BROWSER_PROCESS_EXIT_KIND_NORMAL)
+			// If a new WebView is created from this CoreWebView2Environment after
+			// the browser has exited but before our handler gets to run, a new
+			// browser process will be created and lock the user data folder
+			// again. Do not attempt to cleanup the user data folder in these
+			// cases. We check the PID of the exited browser process against the
+			// PID of the browser process to which our last CoreWebView2 attached.
+			if (pid == m_newestBrowserPid)
 			{
-				CHECK_FAILURE(environment5->remove_BrowserProcessExited(
-					m_browserExitedEventToken));
-				// Release the environment only after the handler is invoked.
-				// Otherwise, there will be no environment to raise the event when
-				// the collection of WebView2 Runtime processes exit.
-				m_webViewEnvironment = nullptr;
-				RunAsync([this]() { CleanupUserDataFolder(); });
+				// Watch for graceful browser process exit. Let ProcessFailed event
+				// handler take care of failed browser process termination.
+				if (kind == COREWEBVIEW2_BROWSER_PROCESS_EXIT_KIND_NORMAL)
+				{
+					CHECK_FAILURE(environment5->remove_BrowserProcessExited(
+						m_browserExitedEventToken));
+					// Release the environment only after the handler is invoked.
+					// Otherwise, there will be no environment to raise the event when
+					// the collection of WebView2 Runtime processes exit.
+					m_webViewEnvironment = nullptr;
+					RunAsync([this]() { CleanupUserDataFolder(); });
+				}
 			}
-		}
-		else
-		{
-			// The exiting process is not the last in use. Do not attempt cleanup
-			// as we might still have a webview open over the user data folder.
-			// Do not block from event handler.
-			AsyncMessageBox(
-				L"A new browser process prevented cleanup of the user data folder.",
-				L"Cleanup User Data Folder");
-		}
+			else
+			{
+				// The exiting process is not the last in use. Do not attempt cleanup
+				// as we might still have a webview open over the user data folder.
+				// Do not block from event handler.
+				AsyncMessageBox(
+					L"A new browser process prevented cleanup of the user data folder.",
+					L"Cleanup User Data Folder");
+			}
 
-		return S_OK;
+			return S_OK;
 		}).Get(),
 			&m_browserExitedEventToken));
 	}

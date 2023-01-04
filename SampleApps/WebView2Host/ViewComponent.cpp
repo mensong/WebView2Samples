@@ -50,188 +50,190 @@ ViewComponent::ViewComponent(
 #endif
       m_isDcompTargetMode(isDcompTargetMode)
 {
-    //! [ZoomFactorChanged]
-    // Register a handler for the ZoomFactorChanged event.
-    // This handler just announces the new level of zoom on the window's title bar.
-    CHECK_FAILURE(m_controller->add_ZoomFactorChanged(
-        Callback<ICoreWebView2ZoomFactorChangedEventHandler>(
-            [this](ICoreWebView2Controller* sender, IUnknown* args) -> HRESULT {
-                double zoomFactor;
-                CHECK_FAILURE(sender->get_ZoomFactor(&zoomFactor));
-
-                //UpdateDocumentTitle(m_appWindow, L" (Zoom: ", zoomFactor);
-
-                return S_OK;
-            })
-        .Get(),
-                &m_zoomFactorChangedToken));
-    //! [ZoomFactorChanged]
-
-    CHECK_FAILURE(m_webView->add_NavigationStarting(
-        Callback<ICoreWebView2NavigationStartingEventHandler>(
-            [this](ICoreWebView2* sender, ICoreWebView2NavigationStartingEventArgs* args)
-            -> HRESULT {
-                wil::unique_cotaskmem_string newUri;
-                CHECK_FAILURE(args->get_Uri(&newUri));
-
-                wil::unique_cotaskmem_string oldUri;
-                CHECK_FAILURE(m_webView->get_Source(&oldUri));
-
-                std::wstring appStartPage = AppStartPage::GetUri(m_appWindow);
-                size_t queryIndex = appStartPage.find('?');
-
-                if (appStartPage.compare(0, queryIndex, newUri.get(), queryIndex) == 0)
-                {
-                    // When navigating to the app start page, make the background of
-                    // the html be the WebView2 logo. On Win10, we do this by making
-                    // the background color transparent so the WebView2 logo in the AppWindow
-                    // shows through. On Win7, transparency is not supported, so we need to
-                    // enable a CSS style to add the WebView2 logo as the background image.
-#if USE_WEBVIEW2_WIN10
-                    COREWEBVIEW2_COLOR transparentColor = { 0, 255, 255, 255 };
-                    wil::com_ptr<ICoreWebView2Controller2> controller2 =
-                        m_controller.query<ICoreWebView2Controller2>();
-                    // Save the previous background color to restore when navigating away.
-                    CHECK_FAILURE(controller2->get_DefaultBackgroundColor(&m_webViewColor));
-                    CHECK_FAILURE(controller2->put_DefaultBackgroundColor(transparentColor));
-#else
-                    std::wstring setBackgroundImageScript =
-                        L"document.addEventListener('DOMContentLoaded', () => {"
-                        L"  document.documentElement.classList.add('logo-background');"
-                        L"});";
-                    m_webView->ExecuteScript(setBackgroundImageScript.c_str(), nullptr);
-#endif
-                }
-                else if (appStartPage.compare(0, queryIndex, oldUri.get(), queryIndex) == 0)
-                {
-#if USE_WEBVIEW2_WIN10
-                    // When navigating away from the app start page, set the background color
-                    // back to the previous value. If the user changed the background color,
-                    // m_webViewColor will have changed.
-                    wil::com_ptr<ICoreWebView2Controller2> controller2 =
-                        m_controller.query<ICoreWebView2Controller2>();
-                    CHECK_FAILURE(controller2->put_DefaultBackgroundColor(m_webViewColor));
-#endif
-                }
-                return S_OK;
-            }).Get(), &m_navigationStartingToken));
-
-    m_controller3 = m_controller.try_query<ICoreWebView2Controller3>();
-    if (m_controller3)
-    {
-        //! [RasterizationScaleChanged]
-        CHECK_FAILURE(m_controller3->add_RasterizationScaleChanged(
-            Callback<ICoreWebView2RasterizationScaleChangedEventHandler>(
-                [this](ICoreWebView2Controller* sender, IUnknown* args) -> HRESULT {
-                    double rasterizationScale;
-                    CHECK_FAILURE(m_controller3->get_RasterizationScale(&rasterizationScale));
-
-                    //UpdateDocumentTitle(
-                    //    m_appWindow, L" (RasterizationScale: ", rasterizationScale);
-
-                    return S_OK;
-                })
-            .Get(), &m_rasterizationScaleChangedToken));
-        //! [RasterizationScaleChanged]
-    }
-
-    // Set up compositor if we're running in windowless mode
-    m_compositionController = m_controller.try_query<ICoreWebView2CompositionController>();
-    if (m_compositionController)
-    {
-        if (m_dcompDevice)
-        {
-            //! [SetRootVisualTarget]
-            // Set the host app visual that the WebView will connect its visual
-            // tree to.
-            BuildDCompTreeUsingVisual();
-            if (m_isDcompTargetMode)
-            {
-                if (!m_dcompTarget)
-                {
-                    m_dcompTarget = Make<DCompTargetImpl>(this);
-                }
-                CHECK_FAILURE(
-                    m_compositionController->put_RootVisualTarget(m_dcompTarget.get()));
-            }
-            else
-            {
-                CHECK_FAILURE(
-                    m_compositionController->put_RootVisualTarget(m_dcompWebViewVisual.get()));
-            }
-            CHECK_FAILURE(m_dcompDevice->Commit());
-            //! [SetRootVisualTarget]
-        }
-#ifdef USE_WEBVIEW2_WIN10
-        else if (m_wincompCompositor)
-        {
-            BuildWinCompVisualTree();
-            CHECK_FAILURE(m_compositionController->put_RootVisualTarget(m_wincompWebViewVisual.as<IUnknown>().get()));
-        }
-#endif
-        else
-        {
-            FAIL_FAST();
-        }
-        //! [CursorChanged]
-        // Register a handler for the CursorChanged event.
-        CHECK_FAILURE(m_compositionController->add_CursorChanged(
-            Callback<ICoreWebView2CursorChangedEventHandler>(
-                [this](ICoreWebView2CompositionController* sender, IUnknown* args)
-                    -> HRESULT {
-                    HRESULT hr = S_OK;
-                    HCURSOR cursor;
-                    if (!m_useCursorId)
-                    {
-                        CHECK_FAILURE(sender->get_Cursor(&cursor));
-                    }
-                    else
-                    {
-                        //! [SystemCursorId]
-                        UINT32 cursorId;
-                        CHECK_FAILURE(m_compositionController->get_SystemCursorId(&cursorId));
-                        cursor = ::LoadCursor(nullptr, MAKEINTRESOURCE(cursorId));
-                        if (cursor == nullptr)
-                        {
-                            hr = HRESULT_FROM_WIN32(GetLastError());
-                        }
-                        //! [SystemCursorId]
-                    }
-
-                    if (SUCCEEDED(hr))
-                    {
-                        SetClassLongPtr(
-                            m_appWindow->GetMainWindow(), GCLP_HCURSOR, (LONG_PTR)cursor);
-                    }
-                    return hr;
-                })
-                .Get(),
-            &m_cursorChangedToken));
-        //! [CursorChanged]
-
-        wil::com_ptr<ICoreWebView2CompositionController3> compositionController3 =
-            m_controller.query<ICoreWebView2CompositionController3>();
-        m_dropTarget = Make<DropTarget>();
-        m_dropTarget->Init(
-            m_appWindow->GetMainWindow(), this, compositionController3.get());
-    }
-    else if (m_dcompDevice
-#ifdef USE_WEBVIEW2_WIN10
-        || m_wincompCompositor
-#endif
-        )
-    {
-        FAIL_FAST();
-    }
-
-    m_webView2_9 = m_webView.try_query<ICoreWebView2_9>();
-    if (m_webView2_9)
-    {
-        SetDefaultDownloadDialogPosition();
-    }
-
-    ResizeWebView();
-    UpdateDpiAndTextScale();
+//    //! [ZoomFactorChanged]
+//    // Register a handler for the ZoomFactorChanged event.
+//    // This handler just announces the new level of zoom on the window's title bar.
+//    CHECK_FAILURE(m_controller->add_ZoomFactorChanged(
+//        Callback<ICoreWebView2ZoomFactorChangedEventHandler>(
+//            [this](ICoreWebView2Controller* sender, IUnknown* args) -> HRESULT {
+//                double zoomFactor;
+//                CHECK_FAILURE(sender->get_ZoomFactor(&zoomFactor));
+//
+//                //UpdateDocumentTitle(m_appWindow, L" (Zoom: ", zoomFactor);
+//
+//                return S_OK;
+//            })
+//        .Get(),
+//                &m_zoomFactorChangedToken));
+//    //! [ZoomFactorChanged]
+//
+//    CHECK_FAILURE(m_webView->add_NavigationStarting(
+//        Callback<ICoreWebView2NavigationStartingEventHandler>(
+//            [this](ICoreWebView2* sender, ICoreWebView2NavigationStartingEventArgs* args)
+//            -> HRESULT {
+//                wil::unique_cotaskmem_string newUri;
+//                CHECK_FAILURE(args->get_Uri(&newUri));
+//
+//                wil::unique_cotaskmem_string oldUri;
+//                CHECK_FAILURE(m_webView->get_Source(&oldUri));
+//
+//                std::wstring appStartPage = AppStartPage::GetUri(m_appWindow);
+//                size_t queryIndex = appStartPage.find('?');
+//
+//                if (appStartPage.compare(0, queryIndex, newUri.get(), queryIndex) == 0)
+//                {
+//                    // When navigating to the app start page, make the background of
+//                    // the html be the WebView2 logo. On Win10, we do this by making
+//                    // the background color transparent so the WebView2 logo in the AppWindow
+//                    // shows through. On Win7, transparency is not supported, so we need to
+//                    // enable a CSS style to add the WebView2 logo as the background image.
+//#if USE_WEBVIEW2_WIN10
+//                    COREWEBVIEW2_COLOR transparentColor = { 0, 255, 255, 255 };
+//                    wil::com_ptr<ICoreWebView2Controller2> controller2 =
+//                        m_controller.query<ICoreWebView2Controller2>();
+//                    // Save the previous background color to restore when navigating away.
+//                    CHECK_FAILURE(controller2->get_DefaultBackgroundColor(&m_webViewColor));
+//                    CHECK_FAILURE(controller2->put_DefaultBackgroundColor(transparentColor));
+//#else
+//                    std::wstring setBackgroundImageScript =
+//                        L"document.addEventListener('DOMContentLoaded', () => {"
+//                        L"  document.documentElement.classList.add('logo-background');"
+//                        L"});";
+//                    m_webView->ExecuteScript(setBackgroundImageScript.c_str(), nullptr);
+//#endif
+//                }
+//                else if (appStartPage.compare(0, queryIndex, oldUri.get(), queryIndex) == 0)
+//                {
+//#if USE_WEBVIEW2_WIN10
+//                    // When navigating away from the app start page, set the background color
+//                    // back to the previous value. If the user changed the background color,
+//                    // m_webViewColor will have changed.
+//                    wil::com_ptr<ICoreWebView2Controller2> controller2 =
+//                        m_controller.query<ICoreWebView2Controller2>();
+//                    CHECK_FAILURE(controller2->put_DefaultBackgroundColor(m_webViewColor));
+//#endif
+//                }
+//                return S_OK;
+//            }).Get(), &m_navigationStartingToken));
+//
+//    m_controller3 = m_controller.try_query<ICoreWebView2Controller3>();
+//    if (m_controller3)
+//    {
+//        //! [RasterizationScaleChanged]
+//        CHECK_FAILURE(m_controller3->add_RasterizationScaleChanged(
+//            Callback<ICoreWebView2RasterizationScaleChangedEventHandler>(
+//                [this](ICoreWebView2Controller* sender, IUnknown* args) -> HRESULT {
+//                    double rasterizationScale;
+//                    CHECK_FAILURE(m_controller3->get_RasterizationScale(&rasterizationScale));
+//
+//                    //UpdateDocumentTitle(
+//                    //    m_appWindow, L" (RasterizationScale: ", rasterizationScale);
+//
+//                    return S_OK;
+//                })
+//            .Get(), &m_rasterizationScaleChangedToken));
+//        //! [RasterizationScaleChanged]
+//    }
+//    
+//    // Set up compositor if we're running in windowless mode
+//    m_compositionController = m_controller.try_query<ICoreWebView2CompositionController>();
+//    if (m_compositionController)
+//    {
+//        if (m_dcompDevice)
+//        {
+//            //! [SetRootVisualTarget]
+//            // Set the host app visual that the WebView will connect its visual
+//            // tree to.
+//            BuildDCompTreeUsingVisual();
+//            if (m_isDcompTargetMode)
+//            {
+//                if (!m_dcompTarget)
+//                {
+//                    m_dcompTarget = Make<DCompTargetImpl>(this);
+//                }
+//                CHECK_FAILURE(
+//                    m_compositionController->put_RootVisualTarget(m_dcompTarget.get()));
+//            }
+//            else
+//            {
+//                CHECK_FAILURE(
+//                    m_compositionController->put_RootVisualTarget(m_dcompWebViewVisual.get()));
+//            }
+//            CHECK_FAILURE(m_dcompDevice->Commit());
+//            //! [SetRootVisualTarget]
+//        }
+//#ifdef USE_WEBVIEW2_WIN10
+//        else if (m_wincompCompositor)
+//        {
+//            BuildWinCompVisualTree();
+//            CHECK_FAILURE(m_compositionController->put_RootVisualTarget(m_wincompWebViewVisual.as<IUnknown>().get()));
+//        }
+//#endif
+//        else
+//        {
+//            FAIL_FAST();
+//        }
+//
+//        //! [CursorChanged]
+//        // Register a handler for the CursorChanged event.
+//        CHECK_FAILURE(m_compositionController->add_CursorChanged(
+//            Callback<ICoreWebView2CursorChangedEventHandler>(
+//                [this](ICoreWebView2CompositionController* sender, IUnknown* args)
+//                    -> HRESULT {
+//                    HRESULT hr = S_OK;
+//                    HCURSOR cursor;
+//                    if (!m_useCursorId)
+//                    {
+//                        CHECK_FAILURE(sender->get_Cursor(&cursor));
+//                    }
+//                    else
+//                    {
+//                        //! [SystemCursorId]
+//                        UINT32 cursorId;
+//                        CHECK_FAILURE(m_compositionController->get_SystemCursorId(&cursorId));
+//                        cursor = ::LoadCursor(nullptr, MAKEINTRESOURCE(cursorId));
+//                        if (cursor == nullptr)
+//                        {
+//                            hr = HRESULT_FROM_WIN32(GetLastError());
+//                        }
+//                        //! [SystemCursorId]
+//                    }
+//
+//                    if (SUCCEEDED(hr))
+//                    {
+//                        SetClassLongPtr(
+//                            m_appWindow->GetMainWindow(), GCLP_HCURSOR, (LONG_PTR)cursor);
+//                    }
+//                    return hr;
+//                })
+//                .Get(),
+//            &m_cursorChangedToken));
+//        //! [CursorChanged]
+//
+//        wil::com_ptr<ICoreWebView2CompositionController3> compositionController3 =
+//            m_controller.query<ICoreWebView2CompositionController3>();
+//        m_dropTarget = Make<DropTarget>();
+//        m_dropTarget->Init(
+//            m_appWindow->GetMainWindow(), this, compositionController3.get());
+//    }
+//    else if (m_dcompDevice
+//#ifdef USE_WEBVIEW2_WIN10
+//        || m_wincompCompositor
+//#endif
+//        )
+//    {
+//        FAIL_FAST();
+//    }
+//    
+//
+//    m_webView2_9 = m_webView.try_query<ICoreWebView2_9>();
+//    if (m_webView2_9)
+//    {
+//        SetDefaultDownloadDialogPosition();
+//    }
+//
+//    ResizeWebView();
+//    UpdateDpiAndTextScale();
 }
 
 bool ViewComponent::HandleWindowMessage(
@@ -582,13 +584,6 @@ void ViewComponent::ResizeWebView()
             LONG((m_webViewBounds.right - m_webViewBounds.left) * m_webViewRatio * m_webViewScale),
             LONG((m_webViewBounds.bottom - m_webViewBounds.top) * m_webViewRatio * m_webViewScale) };
 
-    RECT desiredBounds = m_webViewBounds;
-    desiredBounds.bottom = LONG(
-        webViewSize.cy + m_webViewBounds.top);
-    desiredBounds.right = LONG(
-        webViewSize.cx + m_webViewBounds.left);
-
-    m_controller->put_Bounds(desiredBounds);
     if (m_compositionController)
     {
         POINT webViewOffset = {m_webViewBounds.left, m_webViewBounds.top};
