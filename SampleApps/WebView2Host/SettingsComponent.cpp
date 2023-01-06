@@ -1271,18 +1271,31 @@ void SettingsComponent::SetReplaceImages(bool replaceImages)
         if (m_replaceImages)
         {
             m_webView->AddWebResourceRequestedFilter(
-                L"*", COREWEBVIEW2_WEB_RESOURCE_CONTEXT_IMAGE);
+                L"*", /*COREWEBVIEW2_WEB_RESOURCE_CONTEXT_IMAGE*/COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
             CHECK_FAILURE(m_webView->add_WebResourceRequested(
                 Callback<ICoreWebView2WebResourceRequestedEventHandler>(
                     [this](
                         ICoreWebView2* sender,
                         ICoreWebView2WebResourceRequestedEventArgs* args) {
+
+                        //Replace url
+                        //ICoreWebView2WebResourceRequest* request = nullptr;
+                        //args->get_Request(&request);
+                        //LPWSTR url = NULL;
+                        //request->get_Uri(&url);
+                        //std::wstring sUrl(url);
+                        //if (sUrl == L"https://www.baidu.com/")
+                        //{
+                        //    request->put_Uri(L"https://www.ip138.com/");
+                        //    return S_OK;
+                        //}
+                                                
                         COREWEBVIEW2_WEB_RESOURCE_CONTEXT resourceContext;
                         CHECK_FAILURE(args->get_ResourceContext(&resourceContext));
                         // Ensure that the type is image
                         if (resourceContext != COREWEBVIEW2_WEB_RESOURCE_CONTEXT_IMAGE)
                         {
-                            return E_INVALIDARG;
+                            return S_OK/*E_INVALIDARG*/;
                         }
                         // Override the response with an another image.
                         // If put_Response is not called, the request will continue as normal.

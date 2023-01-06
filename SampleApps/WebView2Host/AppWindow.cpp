@@ -357,7 +357,10 @@ bool AppWindow::HandleWindowMessage(
 	//! [DPIChanged]
 	case WM_DPICHANGED:
 	{
-		m_toolbar.UpdateDpiAndTextScale();
+		if (m_shouldHaveToolbar)
+		{
+			m_toolbar.UpdateDpiAndTextScale();
+		}
 		if (auto view = GetComponent<ViewComponent>())
 		{
 			view->UpdateDpiAndTextScale();
@@ -1804,6 +1807,7 @@ void AppWindow::RegisterEventHandlers()
 			L"\nwindow.CallExtend = function(stringPluginName, stringMethodName, stringParameters){return chrome.webview.hostObjects.sync.sample.CallExtend(stringPluginName, stringMethodName, stringParameters);}"
 			L"\nwindow.LoadPlugins = function(stringDllPath){return chrome.webview.hostObjects.sync.sample.LoadPlugins(stringDllPath);}"
 			L"\nwindow.LoadScript = function(stringFilePath){return chrome.webview.hostObjects.sync.sample.LoadScript(stringFilePath);}"
+			L"\nwindow.EvalAsync = function(stringScript){return chrome.webview.hostObjects.sync.sample.EvalAsync(stringScript);}"
 			, Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
 				[this, sender](HRESULT error, PCWSTR result) -> HRESULT {
 			if (error == S_OK)
@@ -1827,18 +1831,8 @@ void AppWindow::RegisterEventHandlers()
 // Update the bounds of the WebView window to fit available space.
 void AppWindow::ResizeWebView(const RECT& bounds)
 {
-	SIZE webViewSize = {
-			LONG((bounds.right - bounds.left) * 1.0f/* m_webViewRatio * m_webViewScale*/),
-			LONG((bounds.bottom - bounds.top) * 1.0f/* m_webViewRatio * m_webViewScale*/) };
-
-	RECT desiredBounds = bounds;
-	desiredBounds.bottom = LONG(
-		webViewSize.cy + bounds.top);
-	desiredBounds.right = LONG(
-		webViewSize.cx + bounds.left);
-
 	if (m_controller)
-		m_controller->put_Bounds(desiredBounds);
+		m_controller->put_Bounds(bounds);
 }
 //! [ResizeWebView]
 
@@ -2278,7 +2272,11 @@ void AppWindow::OnTextScaleChanged(
 	winrt::Windows::Foundation::IInspectable const& args)
 {
 	RunAsync([this] {
-		m_toolbar.UpdateDpiAndTextScale();
+		if (m_shouldHaveToolbar)
+		{
+			m_toolbar.UpdateDpiAndTextScale();
+		}
+
 		if (auto view = GetComponent<ViewComponent>())
 		{
 			view->UpdateDpiAndTextScale();

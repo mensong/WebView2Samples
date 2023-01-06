@@ -9,6 +9,7 @@
 #include "CheckFailure.h"
 #include <fstream>
 #include <sstream>
+#include <codecvt>
 
 HostObjectSample::HostObjectSample(HostObjectSample::RunCallbackAsync runCallbackAsync, AppWindow* appWindow)
     : m_propertyValue(L"")
@@ -44,7 +45,12 @@ STDMETHODIMP HostObjectSample::CallExtend(BSTR stringPluginName, BSTR stringMeth
 
 STDMETHODIMP HostObjectSample::LoadPlugins(BSTR stringDllPath, BSTR* stringPluginsName)
 {
-    HMODULE h = LoadLibraryW(findFile(stringDllPath).c_str());
+    std::wstring validPath = findFile(stringDllPath);
+    if (validPath.empty())
+        validPath = findFile(stringDllPath + std::wstring(L".dll"));
+    if (validPath.empty())
+        return E_ACCESSDENIED;
+    HMODULE h = LoadLibraryW(validPath.c_str());
     if (h == NULL)
         return E_ACCESSDENIED;
 
@@ -104,26 +110,58 @@ STDMETHODIMP HostObjectSample::LoadPlugins(BSTR stringDllPath, BSTR* stringPlugi
 }
 
 STDMETHODIMP HostObjectSample::LoadScript(BSTR stringFilePath)
-{    
-    std::wifstream fin(findFile(stringFilePath));
+{
+    std::wstring validPath = findFile(stringFilePath);
+    if (validPath.empty())
+        validPath = findFile(stringFilePath + std::wstring(L".js"));
+    if (validPath.empty())
+        return E_ACCESSDENIED;
+
+    const std::locale empty_locale = std::locale::empty();
+    typedef std::codecvt_utf8<wchar_t> converter_type;  //std::codecvt_utf16
+    const converter_type* converter = new converter_type;
+    const std::locale utf8_locale = std::locale(empty_locale, converter);
+
+    std::wifstream fin(validPath.c_str());
+
+    std::locale oldLocale = fin.imbue(utf8_locale);
+
     if (fin.good())
     {
         std::wstringstream ssContent;
         ssContent << fin.rdbuf();
+        std::wstring sContent = ssContent.str();
 
-        m_appWindow->GetWebView()->ExecuteScript(ssContent.str().c_str(), 
-            Microsoft::WRL::Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
-                [this](HRESULT error, PCWSTR result) -> HRESULT
-        {
-		    return S_OK;
-        }).Get());
+		m_appWindow->GetWebView()->ExecuteScript(sContent.c_str(),
+			Microsoft::WRL::Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
+				[this](HRESULT error, PCWSTR result) -> HRESULT
+		{
+			return S_OK;
+		}).Get());
 
         fin.close();
 
+        fin.imbue(oldLocale);
         return S_OK;
     }
+
+    fin.imbue(oldLocale);
     
     return E_ACCESSDENIED;
+}
+
+STDMETHODIMP HostObjectSample::EvalAsync(BSTR stringScript)
+{
+    m_appWindow->RunAsync([this, stringScript]()->void {
+        m_appWindow->GetWebView()->ExecuteScript(stringScript, 
+        Microsoft::WRL::Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
+            [this](HRESULT error, PCWSTR result) -> HRESULT
+        {
+            return S_OK;
+        }).Get());
+    });
+
+    return S_OK;
 }
 
 STDMETHODIMP HostObjectSample::get_Property(BSTR* stringResult)

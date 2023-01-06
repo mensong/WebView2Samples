@@ -13,6 +13,7 @@ library HostObjectSampleLibrary
         HRESULT CallExtend([in] BSTR stringPluginName, [in] BSTR stringMethodName, [in] BSTR stringParameter, [out, retval] BSTR* stringResult);
         HRESULT LoadPlugins([in] BSTR stringDllPath, [out, retval] BSTR* stringPluginsName);
         HRESULT LoadScript([in] BSTR stringFilePath);
+        HRESULT EvalAsync([in] BSTR stringScript);
 
 
         // Demonstrate getting and setting a property.

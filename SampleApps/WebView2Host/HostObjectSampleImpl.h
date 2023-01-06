@@ -44,6 +44,8 @@ public:
 
     STDMETHODIMP LoadScript(BSTR stringFilePath) override;
 
+    STDMETHODIMP EvalAsync(BSTR stringScript) override;
+
     // Demonstrate getting and setting a property.
     STDMETHODIMP get_Property(BSTR* stringResult) override;
     STDMETHODIMP put_Property(BSTR stringValue) override;
