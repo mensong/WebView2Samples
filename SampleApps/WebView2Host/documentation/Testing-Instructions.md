@@ -1322,7 +1322,7 @@ Verify that we correctly pass request to the new opened window when submit form 
 Verify that the `NewWindowRequested` event is fired when opening a link in new window from PDF.
 
 1. Launch the sample app.
-2. Navigate to <https://appassets.example/SamplePDFWithLink.pdf>.
+2. Navigate to <https://appassets.disk/SamplePDFWithLink.pdf>.
 3. Go to `Scenario -> WebView Event Monitor` to begin tracking events.
 4. Right click on the link in the PDF to open the context menu.
 5. Click on 'Open link in new window'.

@@ -7,6 +7,8 @@
 #include <fstream>
 #include <sstream>
 #include "json.h"
+#include <Shlwapi.h>
+#pragma comment(lib, "Shlwapi.lib")
 
 //插件入口点
 PLUGIN_API int plugin_entry(class AppWindow* appWindow)
@@ -26,6 +28,7 @@ PLUGIN_API const wchar_t* plugin_functions()
 	return
 		L"readText\0"
 		L"writeText\0"
+		L"pathExist\0"
 		L"setIcon\0"
 		L"killMe\0"
 		L"\0"
@@ -85,6 +88,15 @@ PLUGIN_API HRESULT writeText(class AppWindow* appWindow, BSTR stringParamters, B
 	//fout.imbue(utf8);
 	
 	std::locale::global(loc);
+	return S_OK;
+}
+
+PLUGIN_API HRESULT pathExist(class AppWindow* appWindow, BSTR stringParamters, BSTR* stringResult)
+{
+	if (::PathFileExistsW(stringParamters) == TRUE)
+		*stringResult = SysAllocString(L"true");
+	else 
+		*stringResult = SysAllocString(L"false");
 	return S_OK;
 }
 

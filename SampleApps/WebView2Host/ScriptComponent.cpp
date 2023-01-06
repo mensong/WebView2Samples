@@ -19,7 +19,7 @@
 using namespace Microsoft::WRL;
 
 //! [AdditionalAllowedFrameAncestors_1]
-const std::wstring myTrustedSite = L"https://appassets.example";
+const std::wstring myTrustedSite = L"https://appassets.disk";
 const std::wstring siteToEmbed = L"https://www.microsoft.com";
 
 // The trusted page is using <iframe name="my_site_embedding_frame">

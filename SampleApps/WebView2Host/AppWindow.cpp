@@ -1534,8 +1534,14 @@ HRESULT AppWindow::OnCreateCoreWebView2ControllerCompleted(HRESULT result, ICore
 			//! [AddVirtualHostNameToFolderMapping]
 			// Setup host resource mapping for local files.
 			m_webView3->SetVirtualHostNameToFolderMapping(
-				L"appassets.example", L"assets",
+				L"appassets.disk", L"assets",
 				COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_DENY_CORS);
+
+			OLECHAR curdir[MAX_PATH +1];
+			::GetCurrentDirectoryW(MAX_PATH, curdir);
+			m_webView3->SetVirtualHostNameToFolderMapping(
+				L"curdir", curdir,
+				COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW);
 			//! [AddVirtualHostNameToFolderMapping]
 		}
 		// We have a few of our own event handlers to register here as well
@@ -2134,7 +2140,7 @@ std::wstring AppWindow::GetLocalUri(
 	if (useVirtualHostName && m_webView3)
 	{
 		//! [LocalUrlUsage]
-		const std::wstring localFileRootUrl = L"https://appassets.example/";
+		const std::wstring localFileRootUrl = L"https://appassets.disk/";
 		return localFileRootUrl + regex_replace(relativePath, std::wregex(L"\\\\"), L"/");
 		//! [LocalUrlUsage]
 	}

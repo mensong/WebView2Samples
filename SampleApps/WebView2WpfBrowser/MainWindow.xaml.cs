@@ -412,7 +412,7 @@ namespace WebView2WpfBrowser
             {
                 // Sample virtual host name for the app's content.
                 // See CoreWebView2.SetVirtualHostNameToFolderMapping: https://learn.microsoft.com/dotnet/api/microsoft.web.webview2.core.corewebview2.setvirtualhostnametofoldermapping
-                return source.Host == "appassets.example";
+                return source.Host == "appassets.disk";
             }
 
             if (e.ProcessFailedKind == CoreWebView2ProcessFailedKind.FrameRenderProcessExited)
@@ -834,8 +834,8 @@ namespace WebView2WpfBrowser
             webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
             webView.CoreWebView2.FrameCreated += WebView_FrameCreatedWebMessages;
             webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
-                "appassets.example", "assets", CoreWebView2HostResourceAccessKind.DenyCors);
-            webView.Source = new Uri("https://appassets.example/webMessages.html");
+                "appassets.disk", "assets", CoreWebView2HostResourceAccessKind.DenyCors);
+            webView.Source = new Uri("https://appassets.disk/webMessages.html");
         }
 
 
@@ -843,7 +843,7 @@ namespace WebView2WpfBrowser
         {
             try
             {
-                if (args.Source != "https://appassets.example/webMessages.html")
+                if (args.Source != "https://appassets.disk/webMessages.html")
                 {
                     // Throw exception from untrusted sources.
                     throw new Exception();
@@ -1727,7 +1727,7 @@ namespace WebView2WpfBrowser
 
         private string GetStartPageUri(CoreWebView2 webView2)
         {
-            string uri = "https://appassets.example/AppStartPage.html";
+            string uri = "https://appassets.disk/AppStartPage.html";
             if (webView2 == null)
             {
                 return uri;
@@ -1746,7 +1746,7 @@ namespace WebView2WpfBrowser
             if (e.IsSuccess)
             {
                 // Setup host resource mapping for local files
-                webView.CoreWebView2.SetVirtualHostNameToFolderMapping("appassets.example", "assets", CoreWebView2HostResourceAccessKind.DenyCors);
+                webView.CoreWebView2.SetVirtualHostNameToFolderMapping("appassets.disk", "assets", CoreWebView2HostResourceAccessKind.DenyCors);
                 // Set StartPage Uri
                 webView.Source = new Uri(GetStartPageUri(webView.CoreWebView2));
 
@@ -2285,8 +2285,8 @@ namespace WebView2WpfBrowser
             webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceivedSharedBuffer;
             webView.CoreWebView2.FrameCreated += WebView_FrameCreatedSharedBuffer;
             webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
-                "appassets.example", "assets", CoreWebView2HostResourceAccessKind.DenyCors);
-            webView.Source = new Uri("https://appassets.example/sharedBuffer.html");
+                "appassets.disk", "assets", CoreWebView2HostResourceAccessKind.DenyCors);
+            webView.Source = new Uri("https://appassets.disk/sharedBuffer.html");
         }
 
         void EnsureSharedBuffer()

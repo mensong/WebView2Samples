@@ -149,7 +149,7 @@ bool ProcessComponent::IsAppContentUri(const std::wstring& source)
     CHECK_FAILURE(uri->GetDomain(&domain));
 
     // Content from our app uses a mapped host name.
-    const std::wstring mappedAppHostName = L"appassets.example";
+    const std::wstring mappedAppHostName = L"appassets.disk";
     return domain.get() == mappedAppHostName;
 }
 

@@ -120,7 +120,7 @@ namespace WebView2WindowsFormsBrowser
             }
 
             // Setup host resource mapping for local files
-            this.webView2Control.CoreWebView2.SetVirtualHostNameToFolderMapping("appassets.example", "assets", CoreWebView2HostResourceAccessKind.DenyCors);
+            this.webView2Control.CoreWebView2.SetVirtualHostNameToFolderMapping("appassets.disk", "assets", CoreWebView2HostResourceAccessKind.DenyCors);
             this.webView2Control.Source = new Uri(GetStartPageUri(this.webView2Control.CoreWebView2));
 
             this.webView2Control.CoreWebView2.SourceChanged += CoreWebView2_SourceChanged;
@@ -447,7 +447,7 @@ namespace WebView2WindowsFormsBrowser
 
         private string GetStartPageUri(CoreWebView2 webView2)
         {
-            string uri = "https://appassets.example/AppStartPage.html";
+            string uri = "https://appassets.disk/AppStartPage.html";
             if (webView2 == null)
             {
                 return uri;
