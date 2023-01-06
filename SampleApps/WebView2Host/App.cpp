@@ -95,6 +95,12 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
             else if (NEXT_PARAM_CONTAINS(L"userdatafolder="))
             {
                 userDataFolder = nextParam.substr(nextParam.find(L'=') + 1);
+                if (userDataFolder.find(L":") == std::wstring::npos)
+                {
+                    OLECHAR curdir[MAX_PATH + 1];
+                    ::GetCurrentDirectoryW(MAX_PATH, curdir);
+                    userDataFolder = curdir + std::wstring(L"\\") + userDataFolder;
+                }
             }
             else if (NEXT_PARAM_CONTAINS(L"creationmode="))
             {
