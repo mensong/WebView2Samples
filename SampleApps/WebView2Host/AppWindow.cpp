@@ -57,6 +57,32 @@ static thread_local size_t s_appInstances = 0;
 // The minimum height and width for Window Features.
 // See https://developer.mozilla.org/docs/Web/API/Window/open#Size
 static constexpr int s_minNewWindowSize = 100;
+extern HINSTANCE g_hInstance;
+std::wstring AppWindow::s_preloadScript;
+
+//load resource as text
+std::wstring GetTextResource(int resId, LPCTSTR resType = L"TEXT")
+{
+	HRSRC hResource = FindResource(g_hInstance, MAKEINTRESOURCE(resId), resType);
+	if (hResource)
+	{
+		HGLOBAL hLoadedResource = LoadResource(g_hInstance, hResource);
+		if (hLoadedResource)
+		{
+			LPVOID pLockedResource = LockResource(hLoadedResource);
+			if (pLockedResource)
+			{
+				DWORD dwResourceSize = SizeofResource(g_hInstance, hResource);
+				if (0 != dwResourceSize)
+				{
+					std::string data((LPCSTR)pLockedResource, dwResourceSize);
+					return AnsiToUnicode(data);
+				}
+			}
+		}
+	}
+	return L"";
+}
 
 // Run Download and Install in another thread so we don't block the UI thread
 DWORD WINAPI DownloadAndInstallWV2RT(_In_ LPVOID lpParameter)
@@ -174,7 +200,6 @@ void WebViewCreateOption::PopupDialog(AppWindow* app)
 		(LPARAM)app);
 }
 
-
 // Creates a new window which is a copy of the entire app, but on the same thread.
 AppWindow::AppWindow(
 	UINT creationModeId,
@@ -196,7 +221,7 @@ AppWindow::AppWindow(
 	, m_shouldHaveToolbar(shouldHaveToolbar)
 	, m_customWindowRect(customWindowRect)
 	, m_initialWindowRect(windowRect)
-{
+{	
 	// Initialize COM as STA.
 	CHECK_FAILURE(OleInitialize(NULL));
 
@@ -215,7 +240,9 @@ AppWindow::AppWindow(
 	{
 		m_mainWindow = CreateWindowExW(
 			WS_EX_CONTROLPARENT, GetWindowClass(), szTitle, WS_OVERLAPPEDWINDOW,
-			m_initialWindowRect.left, m_initialWindowRect.top, m_initialWindowRect.right - m_initialWindowRect.left, m_initialWindowRect.bottom - m_initialWindowRect.top,
+			m_initialWindowRect.left, m_initialWindowRect.top, 
+			m_initialWindowRect.right - m_initialWindowRect.left,
+			m_initialWindowRect.bottom - m_initialWindowRect.top,
 			nullptr, nullptr, g_hInstance, nullptr);
 	}
 	else
@@ -226,11 +253,14 @@ AppWindow::AppWindow(
 			nullptr, nullptr, g_hInstance, nullptr);
 	}
 
-	m_appBackgroundImageHandle = (HBITMAP)LoadImage(
-		g_hInstance, MAKEINTRESOURCE(IDI_WEBVIEW2_BACKGROUND), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
+	m_appBackgroundImageHandle = (HBITMAP)LoadImage(g_hInstance, 
+		MAKEINTRESOURCE(IDI_WEBVIEW2_BACKGROUND), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
 	GetObject(m_appBackgroundImageHandle, sizeof(m_appBackgroundImage), &m_appBackgroundImage);
 	m_memHdc = CreateCompatibleDC(GetDC(m_mainWindow));
 	SelectObject(m_memHdc, m_appBackgroundImageHandle);
+
+	if (s_preloadScript.empty())
+		s_preloadScript = GetTextResource(IDR_TEXT_PRELOAD);
 
 	SetWindowLongPtr(m_mainWindow, GWLP_USERDATA, (LONG_PTR)this);
 
@@ -1808,13 +1838,9 @@ void AppWindow::RegisterEventHandlers()
 		Callback<ICoreWebView2NavigationCompletedEventHandler>([this](
 			ICoreWebView2* sender,
 			ICoreWebView2NavigationCompletedEventArgs* args) {
-				
-		sender->ExecuteScript(
-			L"\nwindow.CallExtend = function(stringPluginName, stringMethodName, stringParameters){return chrome.webview.hostObjects.sync.sample.CallExtend(stringPluginName, stringMethodName, stringParameters);}"
-			L"\nwindow.LoadPlugins = function(stringDllPath){return chrome.webview.hostObjects.sync.sample.LoadPlugins(stringDllPath);}"
-			L"\nwindow.LoadScript = function(stringFilePath){return chrome.webview.hostObjects.sync.sample.LoadScript(stringFilePath);}"
-			L"\nwindow.EvalAsync = function(stringScript){return chrome.webview.hostObjects.sync.sample.EvalAsync(stringScript);}"
-			, Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
+
+		sender->ExecuteScript(s_preloadScript.c_str(),
+			Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
 				[this, sender](HRESULT error, PCWSTR result) -> HRESULT {
 			if (error == S_OK)
 			{

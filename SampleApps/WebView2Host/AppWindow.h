@@ -194,6 +194,11 @@ public:
         return m_initialScript;
     }
 
+    const std::wstring& GetPreloadScript()
+    {
+        return s_preloadScript;
+    }
+
 public:
 	void CloseAppWindow();
 
@@ -201,6 +206,8 @@ private:
     static PCWSTR GetWindowClass();
 
     static INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+
+    static std::wstring s_preloadScript;
 
     static LRESULT CALLBACK WndProcStatic(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     bool HandleWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* result);

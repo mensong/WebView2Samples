@@ -15,6 +15,8 @@ class ScenarioNavigateWithWebResourceRequest : public ComponentBase
 public:
     ScenarioNavigateWithWebResourceRequest(AppWindow* appWindow);
 
+
+
 private:
     AppWindow* m_appWindow;
 };

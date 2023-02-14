@@ -40,7 +40,7 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
     // Default DPI awareness to PerMonitorV2. The commandline parameters can
     // override this.
     DPI_AWARENESS_CONTEXT dpiAwarenessContext = DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2;
-    std::wstring appId(L"EBWebView.SampleApp");
+    std::wstring appId(L"WebView2HostApp");
     std::wstring userDataFolder(L"");
     std::wstring initialUri;
     std::wstring initialScript;

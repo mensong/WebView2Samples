@@ -608,6 +608,7 @@
     <CopyFileToFolders Include="assets\ScenarioTestingFocus.html">
       <DestinationFolders>$(OutDir)\assets</DestinationFolders>
     </CopyFileToFolders>
+    <None Include="WebView2HostPreload.js" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="HostObjectSample.idl" TypeLibraryName="$(OutDir)WebView2Host.tlb">

@@ -16,3 +16,4 @@ ARM64/
 bin/
 obj/
 /SampleApps/UpgradeLog.htm
+/SampleApps/WebView2Host/result.txt
