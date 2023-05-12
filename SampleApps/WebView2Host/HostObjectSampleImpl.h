@@ -46,6 +46,8 @@ public:
 
     STDMETHODIMP EvalAsync(BSTR stringScript) override;
 
+    STDMETHODIMP GetCookies(BSTR* cookiesArrayJson) override;
+
     // Demonstrate getting and setting a property.
     STDMETHODIMP get_Property(BSTR* stringResult) override;
     STDMETHODIMP put_Property(BSTR stringValue) override;

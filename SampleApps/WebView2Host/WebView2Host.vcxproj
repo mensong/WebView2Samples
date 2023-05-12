@@ -544,70 +544,7 @@
     <CopyFileToFolders Include="assets/AppStartPageBackground.png">
       <DestinationFolders>$(OutDir)\assets</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="assets/DemoWorker.js">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets/ScenarioCustomScheme.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets/ScenarioCustomScheme.json">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets/ScenarioIFrameDevicePermission.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets/ScenarioIFrameDevicePermissionIFrame.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets/ScenarioIFrameDevicePermissionIFrameNested.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets/ScenarioSharedBuffer.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
     <None Include="packages.config" />
-    <CopyFileToFolders Include="assets\ScenarioJavaScriptDebugIndex.js">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\ScenarioAddHostObject.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\ScenarioCookieManagement.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\ScenarioDOMContentLoaded.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\ScenarioJavaScriptDebugIndex.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\ScenarioTypeScriptDebugIndex.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\ScenarioTypeScriptDebugIndex.ts">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\ScenarioVirtualHostMappingForPopUpWindow.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\ScenarioVirtualHostMappingForPopUpWindow.js">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\ScenarioWebMessage.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\ScenarioWebViewEventMonitor.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\AppStartPage.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\AppStartPage.js">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="assets\ScenarioTestingFocus.html">
-      <DestinationFolders>$(OutDir)\assets</DestinationFolders>
-    </CopyFileToFolders>
     <None Include="WebView2HostPreload.js" />
   </ItemGroup>
   <ItemGroup>

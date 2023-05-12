@@ -277,33 +277,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="WebView2HostPreload.js" />
+    <None Include="WebView2HostPreload.js">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="assets\ScenarioJavaScriptDebugIndex.js" />
-    <CopyFileToFolders Include="assets\ScenarioAddHostObject.html" />
-    <CopyFileToFolders Include="assets\ScenarioCookieManagement.html" />
-    <CopyFileToFolders Include="assets\ScenarioDOMContentLoaded.html" />
-    <CopyFileToFolders Include="assets\ScenarioJavaScriptDebugIndex.html" />
-    <CopyFileToFolders Include="assets\ScenarioTypeScriptDebugIndex.html" />
-    <CopyFileToFolders Include="assets\ScenarioTypeScriptDebugIndex.ts" />
-    <CopyFileToFolders Include="assets\ScenarioVirtualHostMappingForPopUpWindow.html" />
-    <CopyFileToFolders Include="assets\ScenarioVirtualHostMappingForPopUpWindow.js" />
-    <CopyFileToFolders Include="assets\ScenarioWebMessage.html" />
-    <CopyFileToFolders Include="assets\ScenarioWebViewEventMonitor.html" />
-    <CopyFileToFolders Include="assets\AppStartPage.html" />
-    <CopyFileToFolders Include="assets\AppStartPage.js" />
-    <CopyFileToFolders Include="assets\ScenarioTestingFocus.html" />
     <CopyFileToFolders Include="assets/AppStartPageBackground.png">
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="assets/ScenarioIFrameDevicePermission.html" />
-    <CopyFileToFolders Include="assets/ScenarioIFrameDevicePermissionIFrame.html" />
-    <CopyFileToFolders Include="assets/ScenarioIFrameDevicePermissionIFrameNested.html" />
-    <CopyFileToFolders Include="assets/DemoWorker.js" />
-    <CopyFileToFolders Include="assets/ScenarioCustomScheme.html" />
-    <CopyFileToFolders Include="assets/ScenarioCustomScheme.json" />
-    <CopyFileToFolders Include="assets/ScenarioSharedBuffer.html" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">

@@ -17,6 +17,7 @@
 #include <Shellapi.h>
 #include <ShlObj_core.h>
 #include <winrt/windows.system.h>
+#include <tlhelp32.h>
 
 #include "App.h"
 #include "AppStartPage.h"
@@ -84,6 +85,29 @@ std::wstring GetTextResource(int resId, LPCTSTR resType = L"TEXT")
 	return L"";
 }
 
+DWORD GetProcessIdFromName(LPCWSTR name)
+{
+	PROCESSENTRY32W pe;
+	DWORD id = 0;
+	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	pe.dwSize = sizeof(PROCESSENTRY32W);
+	if (!Process32FirstW(hSnapshot, &pe))
+		return 0;
+	while (1)
+	{
+		pe.dwSize = sizeof(PROCESSENTRY32W);
+		if (Process32NextW(hSnapshot, &pe) == FALSE)
+			break;
+		if (_wcsicmp(pe.szExeFile, name) == 0)
+		{
+			id = pe.th32ProcessID;
+			break;
+		}
+	}
+	CloseHandle(hSnapshot);
+	return id;
+}
+
 // Run Download and Install in another thread so we don't block the UI thread
 DWORD WINAPI DownloadAndInstallWV2RT(_In_ LPVOID lpParameter)
 {
@@ -118,6 +142,14 @@ DWORD WINAPI DownloadAndInstallWV2RT(_In_ LPVOID lpParameter)
 		if (ShellExecuteEx(&shExInfo))
 		{
 			returnCode = 0; // Install successfull
+
+			//wait installer complete
+			while (1)
+			{
+				if (GetProcessIdFromName(L"MicrosoftEdgeWebview2Setup.exe") == 0)
+					break;
+				Sleep(1000);
+			}
 		}
 		else
 		{
@@ -170,13 +202,17 @@ static INT_PTR CALLBACK DlgProcStatic(HWND hDlg, UINT message, WPARAM wParam, LP
 
 			bool useOsRegion = IsDlgButtonChecked(hDlg, IDC_CHECK_USE_OS_REGION);
 
-			WebViewCreateOption opt(
-				std::wstring(std::move(text)), inPrivate, std::wstring(std::move(downloadPath)),
-				std::wstring(std::move(localeRegion)),
-				WebViewCreateEntry::EVER_FROM_CREATE_WITH_OPTION_MENU, useOsRegion);
+			const WebViewCreateOption& mainOpt = app->GetWebViewOption();
+			WebViewCreateOption newOpt = mainOpt; 
+			newOpt.profile = std::wstring(std::move(text));
+			newOpt.isInPrivate = inPrivate;
+			newOpt.downloadPath = std::wstring(std::move(downloadPath));
+			newOpt.localeRegion = std::wstring(std::move(localeRegion));
+			newOpt.entry = WebViewCreateEntry::EVER_FROM_CREATE_WITH_OPTION_MENU;
+			newOpt.useOSRegion = useOsRegion;
 
 			// create app window
-			new AppWindow(app->GetCreationModeId(), opt);
+			new AppWindow(newOpt, false, nullptr, app->GetShouldHaveToolbar());
 		}
 
 		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
@@ -202,25 +238,14 @@ void WebViewCreateOption::PopupDialog(AppWindow* app)
 
 // Creates a new window which is a copy of the entire app, but on the same thread.
 AppWindow::AppWindow(
-	UINT creationModeId,
 	const WebViewCreateOption& opt,
-	const std::wstring& initialUri,
-	const std::wstring& initialScript,
-	const std::wstring& userDataFolderParam,
 	bool isMainWindow,
 	std::function<void()> webviewCreatedCallback,
-	bool customWindowRect,
-	RECT windowRect,
 	bool shouldHaveToolbar
 )
-	: m_creationModeId(creationModeId)
-	, m_webviewOption(opt)
-	, m_initialUri(initialUri)
-	, m_initialScript(initialScript)
+	: m_webviewOption(opt)
 	, m_onWebViewFirstInitialized(webviewCreatedCallback)
 	, m_shouldHaveToolbar(shouldHaveToolbar)
-	, m_customWindowRect(customWindowRect)
-	, m_initialWindowRect(windowRect)
 {	
 	// Initialize COM as STA.
 	CHECK_FAILURE(OleInitialize(NULL));
@@ -231,18 +256,13 @@ AppWindow::AppWindow(
 	LoadStringW(g_hInstance, IDS_APP_TITLE, szTitle, s_maxLoadString);
 	m_appTitle = szTitle;
 
-	if (userDataFolderParam.length() > 0)
-	{
-		m_userDataFolder = userDataFolderParam;
-	}
-
-	if (m_customWindowRect)
+	if (m_webviewOption.customWindowRect)
 	{
 		m_mainWindow = CreateWindowExW(
 			WS_EX_CONTROLPARENT, GetWindowClass(), szTitle, WS_OVERLAPPEDWINDOW,
-			m_initialWindowRect.left, m_initialWindowRect.top, 
-			m_initialWindowRect.right - m_initialWindowRect.left,
-			m_initialWindowRect.bottom - m_initialWindowRect.top,
+			m_webviewOption.windowRect.left, m_webviewOption.windowRect.top,
+			m_webviewOption.windowRect.right - m_webviewOption.windowRect.left,
+			m_webviewOption.windowRect.bottom - m_webviewOption.windowRect.top,
 			nullptr, nullptr, g_hInstance, nullptr);
 	}
 	else
@@ -283,11 +303,9 @@ AppWindow::AppWindow(
 
 	ShowWindow(m_mainWindow, g_nCmdShow);
 	UpdateWindow(m_mainWindow);
-	// If no WebView2 Runtime installed, create new thread to do install/download.
-	// Otherwise just initialize webview.
-	wil::unique_cotaskmem_string version_info;
-	HRESULT hr = GetAvailableCoreWebView2BrowserVersionString(nullptr, &version_info);
-	if (hr == S_OK && version_info != nullptr)
+
+	//if use BYO，do not check installed webview2 runtime
+	if (!m_webviewOption.runtimeFolder.empty())
 	{
 		RunAsync([this] {
 			InitializeWebView();
@@ -295,15 +313,29 @@ AppWindow::AppWindow(
 	}
 	else
 	{
-		if (isMainWindow) {
-			AddRef();
-			CreateThread(0, 0, DownloadAndInstallWV2RT, (void*)this, 0, 0);
+		// If no WebView2 Runtime installed, create new thread to do install/download.
+		// Otherwise just initialize webview.
+		wil::unique_cotaskmem_string version_info;
+		HRESULT hr = GetAvailableCoreWebView2BrowserVersionString(nullptr, &version_info);
+		if (hr == S_OK && version_info != nullptr)
+		{
+			RunAsync([this] {
+				InitializeWebView();
+			});
 		}
 		else
 		{
-			MessageBox(m_mainWindow, L"WebView Runtime not installed", L"WebView Runtime Installation status", MB_OK);
+			if (isMainWindow) {
+				AddRef();
+				CreateThread(0, 0, DownloadAndInstallWV2RT, (void*)this, 0, 0);
+				SetWindowText(m_mainWindow, L"Waiting for installing webview2 runtime...");
+			}
+			else
+			{
+				MessageBox(m_mainWindow, L"WebView Runtime not installed", L"WebView Runtime Installation status", MB_OK);
+			}
 		}
-	}
+	}	
 }
 AppWindow::~AppWindow()
 {
@@ -751,14 +783,14 @@ bool AppWindow::ExecuteAppCommands(WPARAM wParam, LPARAM lParam)
 #ifdef USE_WEBVIEW2_WIN10
 	case IDM_CREATION_MODE_VISUAL_WINCOMP:
 #endif
-		m_creationModeId = LOWORD(wParam);
+		GetWebViewOption().creationModeId = LOWORD(wParam);
 		UpdateCreationModeMenu();
 		return true;
 	case IDM_REINIT:
 		InitializeWebView();
 		return true;
 	case IDM_NEW_WINDOW:
-		new AppWindow(m_creationModeId, GetWebViewOption());
+		new AppWindow(GetWebViewOption(), false, nullptr, GetShouldHaveToolbar());
 		return true;
 	case IDM_NEW_THREAD:
 		CreateNewThread(this);
@@ -1170,7 +1202,9 @@ std::function<void()> AppWindow::GetAcceleratorKeyFunction(UINT key)
 		switch (key)
 		{
 		case 'N':
-			return [this] { new AppWindow(m_creationModeId, GetWebViewOption()); };
+			return [this] { 
+				new AppWindow(GetWebViewOption(), false, nullptr, GetShouldHaveToolbar()); 
+			};
 		case 'Q':
 			return [this] { CloseAppWindow(); };
 		case 'S':
@@ -1202,19 +1236,13 @@ void AppWindow::InitializeWebView()
 	m_wincompCompositor = nullptr;
 #endif
 
-#ifdef USE_FIXED_WEBVIEW2_RUNTIME
-	WCHAR exeFilePath[MAX_PATH];
-	GetModuleFileNameW(NULL, exeFilePath, MAX_PATH);
-	std::wstring webview2RuntimeDir(exeFilePath);
-	size_t idx = webview2RuntimeDir.find_last_of('\\');
-	webview2RuntimeDir = webview2RuntimeDir.substr(0, idx) + L"\\WebView2.Runtime";
-	LPCWSTR subFolder = webview2RuntimeDir.c_str();
-#else
-	LPCWSTR subFolder = nullptr;
-#endif
+	//runtime folder
+	LPCWSTR runtimeFolder = nullptr;
+	if (!m_webviewOption.runtimeFolder.empty())
+		runtimeFolder = m_webviewOption.runtimeFolder.c_str();
 
-	if (m_creationModeId == IDM_CREATION_MODE_VISUAL_DCOMP ||
-		m_creationModeId == IDM_CREATION_MODE_TARGET_DCOMP)
+	if (GetWebViewOption().creationModeId == IDM_CREATION_MODE_VISUAL_DCOMP ||
+		GetWebViewOption().creationModeId == IDM_CREATION_MODE_TARGET_DCOMP)
 	{
 		HRESULT hr = DCompositionCreateDevice2(nullptr, IID_PPV_ARGS(&m_dcompDevice));
 		if (!SUCCEEDED(hr))
@@ -1291,7 +1319,7 @@ void AppWindow::InitializeWebView()
 	}
 
 	HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(
-		subFolder, m_userDataFolder.c_str(), options.Get(),
+		runtimeFolder, GetWebViewOption().userDataFolder.c_str(), options.Get(),
 		Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
 			this, &AppWindow::OnCreateEnvironmentCompleted).Get());
 	//! [CreateCoreWebView2EnvironmentWithOptions]
@@ -1548,7 +1576,7 @@ HRESULT AppWindow::OnCreateCoreWebView2ControllerCompleted(HRESULT result, ICore
 #ifdef USE_WEBVIEW2_WIN10
 			m_wincompCompositor,
 #endif
-			(m_creationModeId == IDM_CREATION_MODE_TARGET_DCOMP));
+			(GetWebViewOption().creationModeId == IDM_CREATION_MODE_TARGET_DCOMP));
 
 		NewComponent<AudioComponent>(this);
 
@@ -1586,9 +1614,10 @@ HRESULT AppWindow::OnCreateCoreWebView2ControllerCompleted(HRESULT result, ICore
 			m_onWebViewFirstInitialized = nullptr;
 		}
 
-		if (m_initialUri != L"none")
+		if (GetWebViewOption().initialUrl != L"none")
 		{
-			std::wstring initialUri = m_initialUri.empty() ? AppStartPage::GetUri(this) : m_initialUri;
+			std::wstring initialUri = GetWebViewOption().initialUrl.empty() ? 
+				AppStartPage::GetUri(this) : GetWebViewOption().initialUrl;
 			if (!initialUri.empty())
 				CHECK_FAILURE(m_webView->Navigate(initialUri.c_str()));
 		}
@@ -1711,55 +1740,10 @@ void AppWindow::RegisterEventHandlers()
 
 		AppWindow* newAppWindow;
 
-		//wil::com_ptr<ICoreWebView2WindowFeatures> windowFeatures;
-		//CHECK_FAILURE(args->get_WindowFeatures(&windowFeatures));
-
-		//RECT windowRect = {0};
-		//UINT32 left = 0;
-		//UINT32 top = 0;
-		//UINT32 height = 0;
-		//UINT32 width = 0;
-		//BOOL shouldHaveToolbar = true;
-
-		//BOOL hasPosition = FALSE;
-		//BOOL hasSize = FALSE;
-		//CHECK_FAILURE(windowFeatures->get_HasPosition(&hasPosition));
-		//CHECK_FAILURE(windowFeatures->get_HasSize(&hasSize));
-
-		//bool useDefaultWindow = true;
-
-		//if (!!hasPosition && !!hasSize)
-		//{
-		//    CHECK_FAILURE(windowFeatures->get_Left(&left));
-		//    CHECK_FAILURE(windowFeatures->get_Top(&top));
-		//    CHECK_FAILURE(windowFeatures->get_Height(&height));
-		//    CHECK_FAILURE(windowFeatures->get_Width(&width));
-			//useDefaultWindow = false;
-		//}
-		//CHECK_FAILURE(windowFeatures->get_ShouldDisplayToolbar(&shouldHaveToolbar));
-
-		//windowRect.left = left;
-		//windowRect.right =
-		//    left + (width < s_minNewWindowSize ? s_minNewWindowSize : width);
-		//windowRect.top = top;
-		//windowRect.bottom =
-		//    top + (height < s_minNewWindowSize ? s_minNewWindowSize : height);
-
 		// passing "none" as uri as its a noinitialnavigation
-		newAppWindow = new AppWindow(
-			m_creationModeId, GetWebViewOption(), L"none", m_initialScript, m_userDataFolder, false,
-			nullptr, m_customWindowRect, m_initialWindowRect, m_shouldHaveToolbar);
-
-		//if (!useDefaultWindow)
-		//{
-		//    newAppWindow = new AppWindow(
-		//        m_creationModeId, GetWebViewOption(), L"none", m_userDataFolder, false,
-		//        nullptr, true, windowRect, m_shouldHaveToolbar);
-		//}
-		//else
-		//{
-		//    newAppWindow = new AppWindow(m_creationModeId, GetWebViewOption(), L"none");
-		//}
+		WebViewCreateOption newOption = GetWebViewOption();
+		newOption.initialUrl = L"none";
+		newAppWindow = new AppWindow(newOption, false, nullptr, m_shouldHaveToolbar);
 
 		wil::com_ptr<ICoreWebView2Deferral> deferral;
 		CHECK_FAILURE(args->GetDeferral(&deferral));
@@ -1830,6 +1814,28 @@ void AppWindow::RegisterEventHandlers()
 	}).Get(),
 		nullptr));
 	//! [NewBrowserVersionAvailable]
+		
+	//! [NavigationStarting]
+	// Register a handler for the NavigationStarting event.
+	// This handler will close the app window if it is not the main window.
+	CHECK_FAILURE(m_webView->add_NavigationStarting(
+		Callback<ICoreWebView2NavigationStartingEventHandler>([this](
+			ICoreWebView2* sender,
+			ICoreWebView2NavigationStartingEventArgs* args) 
+			{
+				//Execute preoload script on navigation start
+				sender->ExecuteScript(s_preloadScript.c_str(), nullptr);
+
+				const std::wstring& startingScript = GetWebViewOption().startingScript;
+				if (!startingScript.empty())
+				{
+					sender->ExecuteScript(startingScript.c_str(), nullptr);
+				}
+
+				return S_OK;
+			}).Get(),
+		nullptr));
+	//! [NavigationStarting]
 
 	//! [NavigationCompleted]
 	// Register a handler for the NavigationCompleted event.
@@ -1837,26 +1843,61 @@ void AppWindow::RegisterEventHandlers()
 	CHECK_FAILURE(m_webView->add_NavigationCompleted(
 		Callback<ICoreWebView2NavigationCompletedEventHandler>([this](
 			ICoreWebView2* sender,
-			ICoreWebView2NavigationCompletedEventArgs* args) {
-
-		sender->ExecuteScript(s_preloadScript.c_str(),
-			Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
-				[this, sender](HRESULT error, PCWSTR result) -> HRESULT {
-			if (error == S_OK)
+			ICoreWebView2NavigationCompletedEventArgs* args)
+	{
+		//使得document.cookies可以访问完整的cookie
+		//! [CookieManager]
+		//先清空旧的cookies信息
+		m_cookies.clear();
+		auto webview2_2 = m_webView.try_query<ICoreWebView2_2>();
+		if (webview2_2)
+		{
+			if (SUCCEEDED(webview2_2->get_CookieManager(&m_cookieManager)) && m_cookieManager)
 			{
-				const std::wstring& initialScript = this->GetInitialScript();
-				if (!initialScript.empty())
+				wil::unique_cotaskmem_string uri;
+				sender->get_Source(&uri);
+				std::wstring wuri = uri.get();
+				m_cookieManager->GetCookies(wuri.c_str(),
+					Callback<ICoreWebView2GetCookiesCompletedHandler>(
+						[this, wuri](HRESULT error_code, ICoreWebView2CookieList* list) -> HRESULT
 				{
-					sender->ExecuteScript(initialScript.c_str(), nullptr);
+					CHECK_FAILURE(error_code);
+
+				std::wstring result;
+				UINT cookie_list_size;
+				CHECK_FAILURE(list->get_Count(&cookie_list_size));
+
+				for (UINT i = 0; i < cookie_list_size; ++i)
+				{
+					wil::com_ptr<ICoreWebView2Cookie> cookie;
+					CHECK_FAILURE(list->GetValueAtIndex(i, &cookie));
+
+					if (cookie.get())
+					{
+						m_cookies.push_back(cookie);
+					}
 				}
+
+				return S_OK;
+				})
+					.Get());
 			}
-			return S_OK;
-		}).Get());
+		}
+		//! [CookieManager]
+
+		//Execute preoload script on navigation completed
+		const std::wstring& loadedScript = GetWebViewOption().loadedScript;
+		if (!loadedScript.empty())
+		{
+			sender->ExecuteScript(loadedScript.c_str(), nullptr);
+		}
 
 		return S_OK;
 	}).Get(),
 		nullptr));
 	//! [NavigationCompleted]
+
+
 }
 
 //! [ResizeWebView]
@@ -2329,7 +2370,7 @@ void AppWindow::UpdateCreationModeMenu()
 #else
 		IDM_CREATION_MODE_TARGET_DCOMP,
 #endif
-		m_creationModeId,
+		GetWebViewOption().creationModeId,
 		MF_BYCOMMAND);
 }
 

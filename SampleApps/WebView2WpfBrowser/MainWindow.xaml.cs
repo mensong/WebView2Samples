@@ -1536,7 +1536,7 @@ namespace WebView2WpfBrowser
 
         void GoToPageCmdCanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = webView != null && !_isNavigating;
+            e.CanExecute = (webView != null && !_isNavigating);
         }
 
         async void GoToPageCmdExecuted(object target, ExecutedRoutedEventArgs e)

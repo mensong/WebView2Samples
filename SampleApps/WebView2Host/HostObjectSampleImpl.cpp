@@ -164,6 +164,147 @@ STDMETHODIMP HostObjectSample::EvalAsync(BSTR stringScript)
     return S_OK;
 }
 
+static std::wstring EncodeQuote(const std::wstring& raw)
+{
+    std::wstring encoded;
+    // Allocate 10 more chars to reduce memory re-allocation
+    // due to adding potential escaping chars.
+    encoded.reserve(raw.length() + 10);
+    encoded.push_back(L'"');
+    for (size_t i = 0; i < raw.length(); ++i)
+    {
+        // Escape chars as listed in https://tc39.es/ecma262/#sec-json.stringify.
+        switch (raw[i])
+        {
+        case '\b':
+            encoded.append(L"\\b");
+            break;
+        case '\f':
+            encoded.append(L"\\f");
+            break;
+        case '\n':
+            encoded.append(L"\\n");
+            break;
+        case '\r':
+            encoded.append(L"\\r");
+            break;
+        case '\t':
+            encoded.append(L"\\t");
+            break;
+        case '\\':
+            encoded.append(L"\\\\");
+            break;
+        case '"':
+            encoded.append(L"\\\"");
+            break;
+        default:
+            encoded.push_back(raw[i]);
+        }
+    }
+    encoded.push_back(L'"');
+    return encoded;
+}
+
+STDMETHODIMP HostObjectSample::GetCookies(BSTR* cookiesArrayJson)
+{
+    std::wstring jsonStr(1024, '\0');
+    jsonStr = L"[";
+    const std::vector<wil::com_ptr<ICoreWebView2Cookie> >& cookies = m_appWindow->GetCookies();
+    for (size_t i = 0; i < cookies.size(); i++)
+    {                
+        std::wstring ent(100, '\0');
+        ent = L"{";
+        bool bAdded = false;
+
+        wil::unique_cotaskmem_string buff;
+        if (SUCCEEDED(cookies[i]->get_Name(&buff)))
+        {
+            if (!bAdded)
+				ent += L"\"name\":" + EncodeQuote(buff.get());
+            else
+                ent += L",\"name\":" + EncodeQuote(buff.get());
+            bAdded = true;
+        }
+        
+        if (SUCCEEDED(cookies[i]->get_Value(&buff)))
+        {
+            if (!bAdded)
+                ent += L"\"value\":" + EncodeQuote(buff.get());
+            else
+                ent += L",\"value\":" + EncodeQuote(buff.get());
+            bAdded = true;
+        }
+
+        if (SUCCEEDED(cookies[i]->get_Domain(&buff)))
+        {
+            if (!bAdded)
+                ent += L"\"domain\":" + EncodeQuote(buff.get());
+            else
+                ent += L",\"domain\":" + EncodeQuote(buff.get());
+            bAdded = true;
+        }
+
+        if (SUCCEEDED(cookies[i]->get_Path(&buff)))
+        {
+            if (!bAdded)
+                ent += L"\"path\":" + EncodeQuote(buff.get());
+            else
+                ent += L",\"path\":" + EncodeQuote(buff.get());
+            bAdded = true;
+        }
+
+        double d = 0.0;
+        if (SUCCEEDED(cookies[i]->get_Expires(&d)))
+        {
+            if (!bAdded)
+                ent += L"\"expires\":" + std::to_wstring(d);
+            else
+                ent += L",\"expires\":" + std::to_wstring(d);
+            bAdded = true;
+        }
+
+        BOOL b = FALSE;
+        if (SUCCEEDED(cookies[i]->get_IsHttpOnly(&b)))
+        {
+            if (!bAdded)
+                ent += L"\"is_http_only\":" + std::wstring(b ? L"true" : L"false");
+            else
+                ent += L",\"is_http_only\":" + std::wstring(b ? L"true" : L"false");
+            bAdded = true;
+        }
+
+        if (SUCCEEDED(cookies[i]->get_IsSecure(&b)))
+        {
+            if (!bAdded)
+                ent += L"\"is_secure\":" + std::wstring(b ? L"true" : L"false");
+            else
+                ent += L",\"is_secure\":" + std::wstring(b ? L"true" : L"false");
+            bAdded = true;
+        }
+
+        if (SUCCEEDED(cookies[i]->get_IsSession(&b)))
+        {
+            if (!bAdded)
+                ent += L"\"is_session\":" + std::wstring(b ? L"true" : L"false");
+            else
+                ent += L",\"is_session\":" + std::wstring(b ? L"true" : L"false");
+            bAdded = true;
+        }
+
+        ent += L"}";
+
+        if (i == 0)
+			jsonStr += ent;
+        else
+            jsonStr += L"," + ent;
+    }
+
+    jsonStr += L"]";
+
+    *cookiesArrayJson = SysAllocString(jsonStr.c_str());
+    return S_OK;
+}
+
 STDMETHODIMP HostObjectSample::get_Property(BSTR* stringResult)
 {
     *stringResult = SysAllocString(m_propertyValue.c_str());

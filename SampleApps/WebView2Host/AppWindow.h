@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <winnt.h>
+
 #ifdef USE_WEBVIEW2_WIN10
 #include <winrt/Windows.UI.Composition.h>
 #include <winrt/Windows.UI.ViewManagement.h>
@@ -30,7 +31,9 @@ enum class WebViewCreateEntry
     OTHER = 0,
     EVER_FROM_CREATE_WITH_OPTION_MENU = 1,
 };
+
 class AppWindow;
+
 struct WebViewCreateOption
 {
     std::wstring profile;
@@ -40,15 +43,50 @@ struct WebViewCreateOption
     // This value is inherited from the operated AppWindow
     WebViewCreateEntry entry = WebViewCreateEntry::OTHER;
     bool useOSRegion = false;
+
+    DWORD creationModeId = IDM_CREATION_MODE_WINDOWED;
+    std::wstring initialUrl;
+    std::wstring startingScript;
+    std::wstring loadedScript;
+    std::wstring userDataFolder;
+    std::wstring runtimeFolder;
+    bool customWindowRect = false;
+    RECT windowRect = { 0 };
+
     WebViewCreateOption()
     {
     }
 
     WebViewCreateOption(
-        const std::wstring& profile_, bool inPrivate, const std::wstring& downloadPath,
-        const std::wstring& localeRegion_, WebViewCreateEntry entry_, bool useOSRegion_)
-        : profile(profile_), isInPrivate(inPrivate), downloadPath(downloadPath),
-          localeRegion(localeRegion_), entry(entry_), useOSRegion(useOSRegion_)
+        const std::wstring& profile_, 
+        bool inPrivate, 
+        const std::wstring& downloadPath,
+        const std::wstring& localeRegion_, 
+        WebViewCreateEntry entry_, 
+        bool useOSRegion_, 
+        DWORD creationModeId, 
+        const std::wstring& initialUri, 
+        const std::wstring& startingScript,
+        const std::wstring& loadedScript, 
+        const std::wstring& userDataFolder,
+        const std::wstring& runtimeFolder,
+        bool customWindowRect, 
+        RECT windowRect
+        )
+        : profile(profile_)
+        , isInPrivate(inPrivate)
+        , downloadPath(downloadPath)
+        , localeRegion(localeRegion_)
+        , entry(entry_)
+        , useOSRegion(useOSRegion_)
+        , creationModeId(creationModeId)
+        , initialUrl(initialUri)
+        , startingScript(startingScript)
+        , loadedScript(loadedScript)
+        , userDataFolder(userDataFolder)
+        , runtimeFolder(runtimeFolder)
+        , customWindowRect(customWindowRect)
+        , windowRect(windowRect)
     {
     }
 
@@ -60,6 +98,15 @@ struct WebViewCreateOption
         localeRegion = opt.localeRegion;
         entry = opt.entry;
         useOSRegion = opt.useOSRegion;
+
+        creationModeId = opt.creationModeId;
+        initialUrl = opt.initialUrl;
+        startingScript = opt.startingScript;
+        loadedScript = opt.loadedScript;
+        userDataFolder = opt.userDataFolder;
+        runtimeFolder = opt.runtimeFolder;
+        customWindowRect = opt.customWindowRect;
+        windowRect = opt.windowRect;
     }
 
     void PopupDialog(AppWindow* app);
@@ -91,15 +138,9 @@ class AppWindow
 {
 public:
     AppWindow(
-        UINT creationModeId,
         const WebViewCreateOption& opt,
-        const std::wstring& initialUri = L"",
-        const std::wstring& initialScript = L"",
-        const std::wstring& userDataFolderParam = L"",
         bool isMainWindow = false,
         std::function<void()> webviewCreatedCallback = nullptr,
-        bool customWindowRect = false,
-        RECT windowRect = { 0 },
         bool shouldHaveToolbar = true);
 
     ~AppWindow();
@@ -143,6 +184,9 @@ public:
     // the AppWindow.
     void RunAsync(std::function<void(void)> callback);
 
+    // Get cookies
+    const std::vector<wil::com_ptr<ICoreWebView2Cookie> >& GetCookies() { return m_cookies; }
+
     // Calls win32 MessageBox inside RunAsync.  Always uses MB_OK.  If you need
     // to get the return value from MessageBox, you'll have to use RunAsync
     // yourself.
@@ -160,38 +204,14 @@ public:
       m_onAppWindowClosing = std::move(f);
     }
 
-    std::wstring GetUserDataFolder()
-    {
-        return m_userDataFolder;
-    }
-    const DWORD GetCreationModeId()
-    {
-        return m_creationModeId;
-    }
-
-    const WebViewCreateOption& GetWebViewOption()
+    WebViewCreateOption& GetWebViewOption()
     {
         return m_webviewOption;
-    }
-
-    bool GetCustomWindowRect()
-    {
-        return m_customWindowRect;
-    }
-
-    const RECT& GetInitialWindowRect()
-    {
-        return m_initialWindowRect;
     }
 
     bool GetShouldHaveToolbar()
     {
         return m_shouldHaveToolbar;
-    }
-
-    const std::wstring& GetInitialScript()
-    {
-        return m_initialScript;
     }
 
     const std::wstring& GetPreloadScript()
@@ -258,19 +278,14 @@ private:
     // This is either empty string in which case we will use StartPage::GetUri,
     //  or "none" to mean don't perform an initial navigate,
     //  or a valid absolute URI to which we will navigate.
-    std::wstring m_initialUri;
-    std::wstring m_initialScript;
-    std::wstring m_userDataFolder;
     HWND m_mainWindow = nullptr;
     Toolbar m_toolbar;
     bool m_shouldHaveToolbar;
     std::function<void()> m_onWebViewFirstInitialized;
     std::function<void()> m_onAppWindowClosing;
-    DWORD m_creationModeId = 0;
+    //DWORD m_creationModeId = 0;
     int m_refCount = 1;
     bool m_isClosed = false;
-    bool m_customWindowRect;
-    RECT m_initialWindowRect;
 
     // The following is state that belongs with the webview, and should
     // be reinitialized along with it. Everything here is undefined when
@@ -280,6 +295,9 @@ private:
     wil::com_ptr<ICoreWebView2CompositionController> m_compositionController;
     wil::com_ptr<ICoreWebView2> m_webView;
     wil::com_ptr<ICoreWebView2_3> m_webView3;
+    wil::com_ptr<ICoreWebView2CookieManager> m_cookieManager;
+
+    std::vector<wil::com_ptr<ICoreWebView2Cookie> > m_cookies;
 
     bool m_shouldHandleNewWindowRequest = true;
 

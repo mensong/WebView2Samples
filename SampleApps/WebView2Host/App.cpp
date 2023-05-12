@@ -42,9 +42,13 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
     DPI_AWARENESS_CONTEXT dpiAwarenessContext = DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2;
     std::wstring appId(L"WebView2HostApp");
     std::wstring userDataFolder(L"");
-    std::wstring initialUri;
-    std::wstring initialScript;
+    std::wstring initialUrl;
+    std::wstring startingScript;
+    std::wstring loadedScript;
+    std::wstring runtimefolder;
     DWORD creationModeId = IDM_CREATION_MODE_WINDOWED;
+
+    //MessageBoxW(0, lpCmdLine, L"command line", 0);
 
     if (lpCmdLine && lpCmdLine[0])
     {
@@ -52,6 +56,8 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
         LPWSTR* params = CommandLineToArgvW(GetCommandLineW(), &paramCount);
         for (int i = 0; i < paramCount; ++i)
         {
+            //MessageBoxW(0, params[i], L"command", 0);
+
             std::wstring nextParam;
             if (params[i][0] == L'-')
             {
@@ -82,15 +88,15 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
             }
             else if (NEXT_PARAM_CONTAINS(L"noinitialnavigation"))
             {
-                initialUri = L"none";
+                initialUrl = L"none";
             }
             else if (NEXT_PARAM_CONTAINS(L"appid="))
             {
                 appId = nextParam.substr(nextParam.find(L'=') + 1);
             }
-            else if (NEXT_PARAM_CONTAINS(L"initialUri="))
+            else if (NEXT_PARAM_CONTAINS(L"url="))
             {
-                initialUri = nextParam.substr(nextParam.find(L'=') + 1);
+                initialUrl = nextParam.substr(nextParam.find(L'=') + 1);
             }
             else if (NEXT_PARAM_CONTAINS(L"userdatafolder="))
             {
@@ -101,6 +107,10 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
                     ::GetCurrentDirectoryW(MAX_PATH, curdir);
                     userDataFolder = curdir + std::wstring(L"\\") + userDataFolder;
                 }
+            }
+            else if (NEXT_PARAM_CONTAINS(L"runtimefolder="))
+            {
+                runtimefolder = nextParam.substr(nextParam.find(L'=') + 1);
             }
             else if (NEXT_PARAM_CONTAINS(L"creationmode="))
             {
@@ -124,20 +134,13 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
                 }
 #endif
             }
-            else if (NEXT_PARAM_CONTAINS(L"initialScript="))
+            else if (NEXT_PARAM_CONTAINS(L"startingscript="))
             {
-                initialScript = nextParam.substr(nextParam.find(L'=') + 1);
-                
-                //std::wstring filepath = nextParam.substr(nextParam.find(L'=') + 1);
-
-                //std::wifstream fin(filepath.c_str());
-                //if (fin.good())
-                //{
-                //    std::wstringstream ssContent;
-                //    ssContent << fin.rdbuf();
-                //    initialScript = ssContent.str();
-                //    fin.close();
-                //}
+                startingScript = nextParam.substr(nextParam.find(L'=') + 1);
+            }
+            else if (NEXT_PARAM_CONTAINS(L"loadedscript="))
+            {
+                loadedScript = nextParam.substr(nextParam.find(L'=') + 1);
             }
         }
         LocalFree(params);
@@ -147,12 +150,23 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
 
     DpiUtil::SetProcessDpiAwarenessContext(dpiAwarenessContext);
 
-    RECT winRc = { 0 };
-    winRc.left = 0;
-    winRc.top = 0;
-    winRc.right = 800;
-    winRc.bottom = 600;
-    new AppWindow(creationModeId, WebViewCreateOption(), initialUri, initialScript, userDataFolder, true, nullptr, false, winRc,
+    //RECT winRc = { 0 };
+    //winRc.left = 0;
+    //winRc.top = 0;
+    //winRc.right = 800;
+    //winRc.bottom = 600;
+
+    WebViewCreateOption opt;
+    opt.creationModeId = creationModeId;
+    opt.initialUrl = initialUrl;
+    opt.startingScript = startingScript;
+    opt.loadedScript = loadedScript;
+    opt.userDataFolder = userDataFolder;
+    opt.runtimeFolder = runtimefolder;
+    opt.customWindowRect = false;
+    opt.windowRect = { 0 };
+
+    new AppWindow(opt, true, nullptr,
 #ifdef _DEBUG
         true
 #else
@@ -220,7 +234,7 @@ void CreateNewThread(AppWindow* app)
 static DWORD WINAPI ThreadProc(void* pvParam)
 {
     AppWindow* app = static_cast<AppWindow*>(pvParam);
-    new AppWindow(app->GetCreationModeId(), app->GetWebViewOption());
+    new AppWindow(app->GetWebViewOption(), false, nullptr, app->GetShouldHaveToolbar());
     app->Release();
     return RunMessagePump();
 }

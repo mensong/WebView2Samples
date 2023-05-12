@@ -14,7 +14,7 @@ library HostObjectSampleLibrary
         HRESULT LoadPlugins([in] BSTR stringDllPath, [out, retval] BSTR* stringPluginsName);
         HRESULT LoadScript([in] BSTR stringFilePath);
         HRESULT EvalAsync([in] BSTR stringScript);
-
+        HRESULT GetCookies([out, retval] BSTR* cookiesArrayJson);
 
         // Demonstrate getting and setting a property.
         [propget] HRESULT Property([out, retval] BSTR* stringResult);
