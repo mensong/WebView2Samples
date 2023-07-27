@@ -272,12 +272,24 @@ AppWindow::AppWindow(
 			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
 			nullptr, nullptr, g_hInstance, nullptr);
 	}
-
-	m_appBackgroundImageHandle = (HBITMAP)LoadImage(g_hInstance, 
-		MAKEINTRESOURCE(IDI_WEBVIEW2_BACKGROUND), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
-	GetObject(m_appBackgroundImageHandle, sizeof(m_appBackgroundImage), &m_appBackgroundImage);
-	m_memHdc = CreateCompatibleDC(GetDC(m_mainWindow));
-	SelectObject(m_memHdc, m_appBackgroundImageHandle);
+		
+	m_appBackgroundImageHandle = (HBITMAP)LoadImage(NULL, 
+		L"WebView2HostBackground.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	if (!m_appBackgroundImageHandle)
+	{
+		m_appBackgroundImageHandle = (HBITMAP)LoadImage(g_hInstance,
+			MAKEINTRESOURCE(IDI_WEBVIEW2_BACKGROUND), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
+	}
+	if (m_appBackgroundImageHandle)
+	{
+		GetObject(m_appBackgroundImageHandle, sizeof(m_appBackgroundImage), &m_appBackgroundImage);
+		m_memHdc = CreateCompatibleDC(GetDC(m_mainWindow));
+		SelectObject(m_memHdc, m_appBackgroundImageHandle);
+	}
+	else
+	{
+		m_memHdc = CreateCompatibleDC(GetDC(m_mainWindow));
+	}
 
 	if (s_preloadScript.empty())
 		s_preloadScript = GetTextResource(IDR_TEXT_PRELOAD);
