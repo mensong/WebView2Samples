@@ -1732,8 +1732,7 @@ void AppWindow::RegisterEventHandlers()
 			ExitFullScreen();
 		}
 		return S_OK;
-	}).Get(),
-		nullptr));
+	}).Get(), nullptr));
 	//! [ContainsFullScreenElementChanged]
 
 	//! [NewWindowRequested]
@@ -1767,8 +1766,7 @@ void AppWindow::RegisterEventHandlers()
 			CHECK_FAILURE(deferral->Complete());
 		};
 		return S_OK;
-	}).Get(),
-		nullptr));
+	}).Get(), nullptr));
 	//! [NewWindowRequested]
 
 	//! [WindowCloseRequested]
@@ -1783,8 +1781,7 @@ void AppWindow::RegisterEventHandlers()
 			CloseAppWindow();
 		}
 		return S_OK;
-	}).Get(),
-		nullptr));
+	}).Get(), nullptr));
 	//! [WindowCloseRequested]
 
 	//! [NewBrowserVersionAvailable]
@@ -1823,8 +1820,7 @@ void AppWindow::RegisterEventHandlers()
 		});
 
 		return S_OK;
-	}).Get(),
-		nullptr));
+	}).Get(), nullptr));
 	//! [NewBrowserVersionAvailable]
 		
 	//! [NavigationStarting]
@@ -1838,16 +1834,47 @@ void AppWindow::RegisterEventHandlers()
 				//Execute preoload script on navigation start
 				sender->ExecuteScript(s_preloadScript.c_str(), nullptr);
 
-				const std::wstring& startingScript = GetWebViewOption().startingScript;
+				const std::wstring& startingScript = m_webviewOption.startingScript;
 				if (!startingScript.empty())
 				{
 					sender->ExecuteScript(startingScript.c_str(), nullptr);
 				}
-
+								
 				return S_OK;
-			}).Get(),
-		nullptr));
+			}).Get(), nullptr));
 	//! [NavigationStarting]
+	
+	//! [WebResourceRequested]
+	// Register a handler for the WebResourceRequested event.
+	// This handler will close the app window if it is not the main window.
+	if (m_webviewOption.headers.size() > 0)
+	{
+		//开启资源请求拦截
+		m_webView->AddWebResourceRequestedFilter(L"*", COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
+		//添加资源请求事件
+		CHECK_FAILURE(m_webView->add_WebResourceRequested(
+			Callback<ICoreWebView2WebResourceRequestedEventHandler>(
+				[this](ICoreWebView2* sender, ICoreWebView2WebResourceRequestedEventArgs* args)
+				{
+					wil::com_ptr<ICoreWebView2WebResourceRequest> request;
+					//wil::com_ptr<ICoreWebView2WebResourceResponse> response;
+					CHECK_FAILURE(args->get_Request(&request));
+					wil::com_ptr<ICoreWebView2HttpRequestHeaders> requestHeaders;
+					HRESULT hr = request->get_Headers(&requestHeaders);
+					if (SUCCEEDED(hr))
+					{
+						for (size_t i = 0; i < m_webviewOption.headers.size(); i++)
+						{
+							requestHeaders->SetHeader(
+								m_webviewOption.headers[i].first.c_str(),
+								m_webviewOption.headers[i].second.c_str());
+						}
+					}
+					return S_OK;
+				})
+			.Get(), &m_webResourceRequestedToken));
+	}
+	//! [WebResourceRequested]
 
 	//! [NavigationCompleted]
 	// Register a handler for the NavigationCompleted event.
@@ -1875,22 +1902,22 @@ void AppWindow::RegisterEventHandlers()
 				{
 					CHECK_FAILURE(error_code);
 
-				std::wstring result;
-				UINT cookie_list_size;
-				CHECK_FAILURE(list->get_Count(&cookie_list_size));
+					std::wstring result;
+					UINT cookie_list_size;
+					CHECK_FAILURE(list->get_Count(&cookie_list_size));
 
-				for (UINT i = 0; i < cookie_list_size; ++i)
-				{
-					wil::com_ptr<ICoreWebView2Cookie> cookie;
-					CHECK_FAILURE(list->GetValueAtIndex(i, &cookie));
-
-					if (cookie.get())
+					for (UINT i = 0; i < cookie_list_size; ++i)
 					{
-						m_cookies.push_back(cookie);
-					}
-				}
+						wil::com_ptr<ICoreWebView2Cookie> cookie;
+						CHECK_FAILURE(list->GetValueAtIndex(i, &cookie));
 
-				return S_OK;
+						if (cookie.get())
+						{
+							m_cookies.push_back(cookie);
+						}
+					}
+
+					return S_OK;
 				})
 					.Get());
 			}
@@ -1909,7 +1936,7 @@ void AppWindow::RegisterEventHandlers()
 		nullptr));
 	//! [NavigationCompleted]
 
-
+	
 }
 
 //! [ResizeWebView]

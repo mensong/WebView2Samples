@@ -47,6 +47,7 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
     std::wstring loadedScript;
     std::wstring runtimefolder;
     DWORD creationModeId = IDM_CREATION_MODE_WINDOWED;
+    std::vector<std::pair<std::wstring, std::wstring>> headers;
 
     //MessageBoxW(0, lpCmdLine, L"command line", 0);
 
@@ -142,6 +143,19 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
             {
                 loadedScript = nextParam.substr(nextParam.find(L'=') + 1);
             }
+            else if (NEXT_PARAM_CONTAINS(L"header="))//可定义多个
+            {
+                std::wstring header = nextParam.substr(nextParam.find(L'=') + 1);
+                size_t idx = header.find(L"=");
+                if (idx == std::wstring::npos)
+                {
+                    headers.push_back(std::make_pair(header, L""));
+                }
+                else if (idx != 0)
+                {
+                    headers.push_back(std::make_pair(header.substr(0, idx), header.substr(idx + 1)));
+                }
+            }
         }
         LocalFree(params);
     }
@@ -165,6 +179,7 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
     opt.runtimeFolder = runtimefolder;
     opt.customWindowRect = false;
     opt.windowRect = { 0 };
+    opt.headers = headers;
 
     new AppWindow(opt, true, nullptr,
 #ifdef _DEBUG

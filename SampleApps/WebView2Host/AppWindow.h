@@ -52,6 +52,7 @@ struct WebViewCreateOption
     std::wstring runtimeFolder;
     bool customWindowRect = false;
     RECT windowRect = { 0 };
+    std::vector<std::pair<std::wstring, std::wstring>> headers;
 
     WebViewCreateOption()
     {
@@ -107,6 +108,7 @@ struct WebViewCreateOption
         runtimeFolder = opt.runtimeFolder;
         customWindowRect = opt.customWindowRect;
         windowRect = opt.windowRect;
+        headers = opt.headers;
     }
 
     void PopupDialog(AppWindow* app);
@@ -350,6 +352,8 @@ private:
     BITMAP m_appBackgroundImage;
     HDC m_memHdc;
     RECT m_appBackgroundImageRect;
+
+    EventRegistrationToken m_webResourceRequestedToken = {};
 };
 
 template <class ComponentType, class... Args> void AppWindow::NewComponent(Args&&... args)
