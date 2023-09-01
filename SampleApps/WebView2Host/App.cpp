@@ -48,6 +48,11 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
     std::wstring runtimefolder;
     DWORD creationModeId = IDM_CREATION_MODE_WINDOWED;
     std::vector<std::pair<std::wstring, std::wstring>> headers;
+    bool hasRect = false;
+    int rect_x = 0;
+    int rect_y = 0;
+    int rect_width = 800;
+    int rect_heigth = 600;
 
     //MessageBoxW(0, lpCmdLine, L"command line", 0);
 
@@ -145,8 +150,9 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
             }
             else if (NEXT_PARAM_CONTAINS(L"header="))//可定义多个
             {
+                /* -header=Cookie=123456789 -header=User-Agent=EDGE */
                 std::wstring header = nextParam.substr(nextParam.find(L'=') + 1);
-                size_t idx = header.find(L"=");
+                size_t idx = header.find(L'=');
                 if (idx == std::wstring::npos)
                 {
                     headers.push_back(std::make_pair(header, L""));
@@ -156,6 +162,41 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
                     headers.push_back(std::make_pair(header.substr(0, idx), header.substr(idx + 1)));
                 }
             }
+            else if (NEXT_PARAM_CONTAINS(L"rect="))
+            {
+                // -rect=x,y,width,heigth
+                // -rect=100,100,800,600
+                // -rect=-1,-1,800,600  窗口居中
+                std::wstring rectStr = nextParam.substr(nextParam.find(L'=') + 1);
+                size_t idx = rectStr.find(L',');
+                int n = 0;
+				while (idx != std::wstring::npos || !rectStr.empty())
+				{
+                    int nv = _wtoi(rectStr.substr(0, idx).c_str());
+                    switch (n++)
+                    {
+                    case 0:
+                        rect_x = nv;
+                        break;
+                    case 1:
+                        rect_y = nv;
+                        break;
+                    case 2:
+                        rect_width = nv;
+                        break;
+                    case 3:
+                        rect_heigth = nv;
+                        break;
+                    default:
+                        break;
+                    }
+                    if (idx == std::wstring::npos)
+                        break;
+					rectStr = rectStr.substr(idx + 1);
+					idx = rectStr.find(L',');
+				}
+                hasRect = true;
+            }
         }
         LocalFree(params);
     }
@@ -164,11 +205,20 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
 
     DpiUtil::SetProcessDpiAwarenessContext(dpiAwarenessContext);
 
-    //RECT winRc = { 0 };
-    //winRc.left = 0;
-    //winRc.top = 0;
-    //winRc.right = 800;
-    //winRc.bottom = 600;
+    RECT winRc = { 0 };
+    if (hasRect)
+    {
+        int nScreenWidth = GetSystemMetrics(SM_CXSCREEN); //屏幕宽度
+        int nScreenHeight = GetSystemMetrics(SM_CYSCREEN); //屏幕高度
+        if (rect_x == -1)
+            rect_x = (nScreenWidth - rect_width) / 2;
+        if (rect_y == -1)
+            rect_y = (nScreenHeight - rect_heigth) / 2;
+        winRc.left = rect_x;
+        winRc.top = rect_y;
+        winRc.right = rect_x + rect_width;
+        winRc.bottom = rect_y + rect_heigth;
+    }
 
     WebViewCreateOption opt;
     opt.creationModeId = creationModeId;
@@ -177,8 +227,8 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
     opt.loadedScript = loadedScript;
     opt.userDataFolder = userDataFolder;
     opt.runtimeFolder = runtimefolder;
-    opt.customWindowRect = false;
-    opt.windowRect = { 0 };
+    opt.customWindowRect = hasRect;
+	opt.windowRect = winRc;
     opt.headers = headers;
 
     new AppWindow(opt, true, nullptr,
