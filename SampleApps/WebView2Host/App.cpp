@@ -201,6 +201,15 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
         LocalFree(params);
     }
 
+    //设置用户数据目录到临时目录下
+    if (userDataFolder.empty())
+    {
+        wchar_t tmpDir[MAX_PATH + 1] = { 0 };
+        ::GetTempPathW(MAX_PATH, tmpDir);
+        userDataFolder = tmpDir;
+        userDataFolder += L"WebView2Host_Cache";
+    }
+
     SetCurrentProcessExplicitAppUserModelID(appId.c_str());
 
     DpiUtil::SetProcessDpiAwarenessContext(dpiAwarenessContext);
