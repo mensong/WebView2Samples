@@ -30,6 +30,7 @@ PLUGIN_API const wchar_t* plugin_functions()
 		L"writeText\0"
 		L"pathExist\0"
 		L"setIcon\0"
+		L"setCaption\0"
 		L"killMe\0"
 		L"\0"
 		;
@@ -114,6 +115,12 @@ PLUGIN_API HRESULT setIcon(class AppWindow* appWindow, BSTR stringParamters, BST
 	SendMessage(WebViewApi::Ins().GetHWND(appWindow), WM_SETICON, TRUE, (LPARAM)hicon);
 	SendMessage(WebViewApi::Ins().GetHWND(appWindow), WM_SETICON, FALSE, (LPARAM)hicon);
 
+	return S_OK;
+}
+
+PLUGIN_API HRESULT setCaption(class AppWindow* appWindow, BSTR stringParamters, BSTR* stringResult)
+{
+	::SetWindowText(WebViewApi::Ins().GetHWND(appWindow), stringParamters);
 	return S_OK;
 }
 
