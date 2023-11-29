@@ -7,8 +7,12 @@
 #include <fstream>
 #include <sstream>
 #include "json.h"
+
 #include <Shlwapi.h>
 #pragma comment(lib, "Shlwapi.lib")
+
+#include "ProceedDataExchange.h"
+ProceedDataExchange g_shm(_T("WebView2Host"), 10240);
 
 //插件入口点
 PLUGIN_API int plugin_entry(class AppWindow* appWindow)
@@ -32,6 +36,8 @@ PLUGIN_API const wchar_t* plugin_functions()
 		L"setIcon\0"
 		L"setCaption\0"
 		L"killMe\0"
+		L"setSharedData\0"
+		L"getSharedData\0"
 		L"\0"
 		;
 }
@@ -127,6 +133,77 @@ PLUGIN_API HRESULT setCaption(class AppWindow* appWindow, BSTR stringParamters, 
 PLUGIN_API HRESULT killMe(class AppWindow* appWindow, BSTR stringParamters, BSTR* stringResult)
 {
 	WebViewApi::Ins().CloseApp(appWindow);
+
+	return S_OK;
+}
+
+PLUGIN_API HRESULT setSharedData(class AppWindow* appWindow, BSTR stringParamters, BSTR* stringResult)
+{
+	if (!g_shm.isValid())
+	{
+		return E_FAIL;
+	}
+
+	JSONValue* js = JSON::Parse(stringParamters);
+	if (js == NULL)
+	{
+		return E_FAIL;
+	}
+
+	long id = js->Child(L"id")->AsNumber(-1);
+	if (id < 0)
+		return E_FAIL;
+	std::wstring text = js->Child(L"value")->AsString();
+	
+	long dataSize = wcslen(text.c_str());
+
+	//写长度
+	ProceedDataExchange::RESULT res = g_shm.writePackage(&dataSize, sizeof(dataSize), id * 2, TRUE);
+	if (res < 0)
+	{
+		return E_FAIL;
+	}
+
+	//写内容
+	res = g_shm.writePackage(text.c_str(), dataSize * sizeof(wchar_t), (id * 2) + 1, TRUE);
+	if (res < 0)
+	{
+		return E_FAIL;
+	}
+
+	return S_OK;
+}
+
+PLUGIN_API HRESULT getSharedData(class AppWindow* appWindow, BSTR stringParamters, BSTR* stringResult)
+{
+	if (!g_shm.isValid())
+	{
+		return E_FAIL;
+	}
+
+	long id = _wtoi(stringParamters);
+	if (id < 0)
+		return E_FAIL;
+
+	long dataSize = 0;
+	ProceedDataExchange::RESULT res = g_shm.readPackage(&dataSize, sizeof(dataSize), id * 2, TRUE);
+	if (res < 0)
+	{
+		return E_FAIL;
+	}
+
+	long realDataSize = dataSize * sizeof(wchar_t);
+	wchar_t* data = new wchar_t[dataSize + 1];
+	res = g_shm.readPackage(data, realDataSize, (id * 2) + 1, TRUE);
+	if (res < 0)
+	{
+		delete[] data;
+		return E_FAIL;
+	}
+	data[dataSize] = '\0';
+
+	*stringResult = SysAllocString(data);
+	delete[] data;
 
 	return S_OK;
 }

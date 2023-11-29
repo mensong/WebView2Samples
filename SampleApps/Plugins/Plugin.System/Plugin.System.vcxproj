@@ -302,6 +302,7 @@
     <ClInclude Include="..\3RD\json\JSONValue.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="ProceedDataExchange.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\3RD\json\JSON.cpp">
@@ -336,6 +337,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Plugin.System.cpp" />
+    <ClCompile Include="ProceedDataExchange.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

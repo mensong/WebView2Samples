@@ -33,6 +33,9 @@
     <ClInclude Include="..\3RD\json\JSONValue.h">
       <Filter>json</Filter>
     </ClInclude>
+    <ClInclude Include="ProceedDataExchange.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -49,6 +52,9 @@
     </ClCompile>
     <ClCompile Include="..\3RD\json\JSONValue.cpp">
       <Filter>json</Filter>
+    </ClCompile>
+    <ClCompile Include="ProceedDataExchange.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

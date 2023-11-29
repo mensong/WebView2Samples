@@ -15,10 +15,6 @@ class AppWindow;
 
 #ifdef WEBVIEW_PLUGINS
 
-typedef HRESULT(*FN_ExecuteScriptAsync)(AppWindow* appWindow, BSTR stringScript, BSTR* stringResult);
-typedef void (*FN_CloseApp)(AppWindow* appWindow);
-typedef HWND (*FN_GetHWND)(AppWindow* appWindow);
-
 #define DEF_PROC(hDll, name) \
 	name = (FN_##name)::GetProcAddress(hDll, #name)
 
@@ -26,26 +22,21 @@ typedef HWND (*FN_GetHWND)(AppWindow* appWindow);
 class WebViewApi
 {
 public:
-private:
-	static WebViewApi* s_ins;
-
-public:
 	static WebViewApi& Ins()
 	{
-		if (!s_ins)
-			s_ins = new WebViewApi;
-		return *s_ins;
+		static WebViewApi s_ins;
+		return s_ins;
 	}
 
-	static void Rel()
-	{
-		if (s_ins)
-		{
-			delete s_ins;
-			s_ins = NULL;
-		}
-	}
+	typedef HRESULT(*FN_ExecuteScriptAsync)(AppWindow* appWindow, BSTR stringScript, BSTR* stringResult);
+	typedef void (*FN_CloseApp)(AppWindow* appWindow);
+	typedef HWND(*FN_GetHWND)(AppWindow* appWindow);
 
+	FN_ExecuteScriptAsync		ExecuteScriptAsync;
+	FN_CloseApp					CloseApp;
+	FN_GetHWND					GetHWND;
+
+private:
 	WebViewApi()
 	{
 		OLECHAR current[MAX_PATH];
@@ -74,13 +65,7 @@ public:
 		}
 	}
 
-
-	FN_ExecuteScriptAsync		ExecuteScriptAsync;
-	FN_CloseApp					CloseApp;
-	FN_GetHWND					GetHWND;
-
 	HMODULE hDll;
 };
-__declspec(selectany) WebViewApi* WebViewApi::s_ins = NULL;
 
 #endif
