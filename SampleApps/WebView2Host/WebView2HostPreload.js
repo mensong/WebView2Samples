@@ -1,13 +1,15 @@
 
 //专有公共函数
+
+//加载插件，并返回stringPluginName
+window.LoadPlugins = function(stringDllPath){
+	return chrome.webview.hostObjects.sync.sample.LoadPlugins(stringDllPath);
+}
+
 window.CallExtend = function(stringPluginName, stringMethodName, stringParameters){
 	if ((typeof stringParameters!='string') || stringParameters.constructor!=String)
 		stringParameters = JSON.stringify(stringParameters);
 	return chrome.webview.hostObjects.sync.sample.CallExtend(stringPluginName, stringMethodName, stringParameters);
-}
-
-window.LoadPlugins = function(stringDllPath){
-	return chrome.webview.hostObjects.sync.sample.LoadPlugins(stringDllPath);
 }
 
 window.LoadScript = function(stringFilePath){
