@@ -1,6 +1,8 @@
 
 //专有公共函数
 window.CallExtend = function(stringPluginName, stringMethodName, stringParameters){
+	if ((typeof stringParameters!='string') || stringParameters.constructor!=String)
+		stringParameters = JSON.stringify(stringParameters);
 	return chrome.webview.hostObjects.sync.sample.CallExtend(stringPluginName, stringMethodName, stringParameters);
 }
 

@@ -18,7 +18,6 @@ class AppWindow;
 #define DEF_PROC(hDll, name) \
 	name = (FN_##name)::GetProcAddress(hDll, #name)
 
-
 class WebViewApi
 {
 public:
@@ -26,6 +25,11 @@ public:
 	{
 		static WebViewApi s_ins;
 		return s_ins;
+	}
+
+	static void SetResultString(BSTR* stringResult, const wchar_t* data)
+	{
+		*stringResult = SysAllocString(data);
 	}
 
 	typedef HRESULT(*FN_ExecuteScriptAsync)(AppWindow* appWindow, BSTR stringScript, BSTR* stringResult);

@@ -17,6 +17,9 @@ typedef struct
 class ProceedDataExchange
 {
 public:
+	/// <summary>
+	/// 小于0则表示错误
+	/// </summary>
 	enum RESULT
 	{
 		NEWDATA = 1,

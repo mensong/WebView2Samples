@@ -51,7 +51,7 @@ PLUGIN_API HRESULT readText(class AppWindow* appWindow, BSTR stringParamters, BS
 		ssContent << fin.rdbuf();
 		std::wstring sContext = ssContent.str();
 		fin.close();
-		*stringResult = SysAllocString(sContext.c_str());
+		WebViewApi::SetResultString(stringResult, sContext.c_str());
 		return S_OK;
 	}
 
@@ -84,11 +84,11 @@ PLUGIN_API HRESULT writeText(class AppWindow* appWindow, BSTR stringParamters, B
 
 		fout.close();
 
-		*stringResult = SysAllocString(L"true");
+		WebViewApi::SetResultString(stringResult, L"true");
 	}
 	else
 	{
-		*stringResult = SysAllocString(L"false");
+		WebViewApi::SetResultString(stringResult, L"false");
 	}
 
 	//std::locale utf8(std::locale("C"), new std::codecvt_utf8<wchar_t, 0x10ffff, std::codecvt_mode(std::generate_header | std::little_endian)>());
@@ -101,9 +101,9 @@ PLUGIN_API HRESULT writeText(class AppWindow* appWindow, BSTR stringParamters, B
 PLUGIN_API HRESULT pathExist(class AppWindow* appWindow, BSTR stringParamters, BSTR* stringResult)
 {
 	if (::PathFileExistsW(stringParamters) == TRUE)
-		*stringResult = SysAllocString(L"true");
-	else 
-		*stringResult = SysAllocString(L"false");
+		WebViewApi::SetResultString(stringResult, L"true");
+	else
+		WebViewApi::SetResultString(stringResult, L"false");
 	return S_OK;
 }
 
@@ -181,7 +181,31 @@ PLUGIN_API HRESULT getSharedData(class AppWindow* appWindow, BSTR stringParamter
 		return E_FAIL;
 	}
 
-	long id = _wtoi(stringParamters);
+	JSONValue* js = JSON::Parse(stringParamters);
+	if (js == NULL)
+	{
+		return E_FAIL;
+	}
+
+	long id = -1;
+
+	bool hasDef = false;
+	std::wstring defVal;
+
+	if (js->IsInt())
+	{
+		id = js->AsNumber();
+		hasDef = false;
+	}
+	else
+	{
+		if (!js->HasChild(L"id"))
+			return E_FAIL;
+		id = js->Child(L"id")->AsNumber(-1);
+		defVal = js->Child(L"default")->AsString();
+		hasDef = true;
+	}
+
 	if (id < 0)
 		return E_FAIL;
 
@@ -189,6 +213,11 @@ PLUGIN_API HRESULT getSharedData(class AppWindow* appWindow, BSTR stringParamter
 	ProceedDataExchange::RESULT res = g_shm.readPackage(&dataSize, sizeof(dataSize), id * 2, TRUE);
 	if (res < 0)
 	{
+		if (hasDef)
+		{
+			WebViewApi::SetResultString(stringResult, defVal.c_str());
+			return S_OK;
+		}
 		return E_FAIL;
 	}
 
@@ -198,11 +227,17 @@ PLUGIN_API HRESULT getSharedData(class AppWindow* appWindow, BSTR stringParamter
 	if (res < 0)
 	{
 		delete[] data;
+
+		if (hasDef)
+		{
+			WebViewApi::SetResultString(stringResult, defVal.c_str());
+			return S_OK;
+		}
 		return E_FAIL;
 	}
 	data[dataSize] = '\0';
 
-	*stringResult = SysAllocString(data);
+	WebViewApi::SetResultString(stringResult, data);
 	delete[] data;
 
 	return S_OK;
