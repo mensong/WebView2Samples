@@ -1297,6 +1297,8 @@ void AppWindow::InitializeWebView()
 		CHECK_FAILURE(options->put_Language(m_language.c_str()));
 	CHECK_FAILURE(options->put_IsCustomCrashReportingEnabled(
 		m_CustomCrashReportingEnabled ? TRUE : FALSE));
+	//¹Ø±Õ¿çÓò¼ì²é
+	options->put_AdditionalBrowserArguments(L"-disable-web-security");
 
 	//! [CoreWebView2CustomSchemeRegistration]
 	Microsoft::WRL::ComPtr<ICoreWebView2ExperimentalEnvironmentOptions> optionsExperimental;
@@ -1936,7 +1938,6 @@ void AppWindow::RegisterEventHandlers()
 		nullptr));
 	//! [NavigationCompleted]
 
-	
 }
 
 //! [ResizeWebView]
