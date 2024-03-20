@@ -133,7 +133,7 @@ PLUGIN_API HRESULT setCaption(class AppWindow* appWindow, BSTR stringParamters, 
 PLUGIN_API HRESULT killMe(class AppWindow* appWindow, BSTR stringParamters, BSTR* stringResult)
 {
 	WebViewApi::Ins().CloseApp(appWindow);
-
+	exit(0);
 	return S_OK;
 }
 
