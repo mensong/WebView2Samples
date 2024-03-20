@@ -53,6 +53,7 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
     int rect_y = 0;
     int rect_width = 800;
     int rect_heigth = 600;
+    DWORD winstyle = WS_EX_CONTROLPARENT;
 
     //MessageBoxW(0, lpCmdLine, L"command line", 0);
 
@@ -197,6 +198,11 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
 				}
                 hasRect = true;
             }
+            else if (NEXT_PARAM_CONTAINS(L"winstyle="))
+            {
+                std::wstring dwWinStyle = nextParam.substr(nextParam.find(L'=') + 1);
+                winstyle = _wtoll(dwWinStyle.c_str());
+            }
         }
         LocalFree(params);
     }
@@ -239,6 +245,7 @@ wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmd
     opt.customWindowRect = hasRect;
 	opt.windowRect = winRc;
     opt.headers = headers;
+    opt.winStyle = winstyle;
 
     new AppWindow(opt, true, nullptr,
 #ifdef _DEBUG

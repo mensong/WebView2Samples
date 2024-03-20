@@ -53,6 +53,7 @@ struct WebViewCreateOption
     bool customWindowRect = false;
     RECT windowRect = { 0 };
     std::vector<std::pair<std::wstring, std::wstring>> headers;
+    DWORD winStyle = WS_EX_CONTROLPARENT;
 
     WebViewCreateOption()
     {
@@ -72,7 +73,9 @@ struct WebViewCreateOption
         const std::wstring& userDataFolder,
         const std::wstring& runtimeFolder,
         bool customWindowRect, 
-        RECT windowRect
+        RECT windowRect,
+        std::vector<std::pair<std::wstring, std::wstring>> headers,
+        DWORD winStyle
         )
         : profile(profile_)
         , isInPrivate(inPrivate)
@@ -88,6 +91,8 @@ struct WebViewCreateOption
         , runtimeFolder(runtimeFolder)
         , customWindowRect(customWindowRect)
         , windowRect(windowRect)
+        , headers(headers)
+        , winStyle(winStyle)
     {
     }
 
@@ -109,6 +114,7 @@ struct WebViewCreateOption
         customWindowRect = opt.customWindowRect;
         windowRect = opt.windowRect;
         headers = opt.headers;
+        winStyle = opt.winStyle;
     }
 
     void PopupDialog(AppWindow* app);

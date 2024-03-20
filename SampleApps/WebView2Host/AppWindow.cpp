@@ -259,7 +259,7 @@ AppWindow::AppWindow(
 	if (m_webviewOption.customWindowRect)
 	{
 		m_mainWindow = CreateWindowExW(
-			WS_EX_CONTROLPARENT, GetWindowClass(), szTitle, WS_OVERLAPPEDWINDOW,
+			m_webviewOption.winStyle, GetWindowClass(), szTitle, WS_OVERLAPPEDWINDOW,
 			m_webviewOption.windowRect.left, m_webviewOption.windowRect.top,
 			m_webviewOption.windowRect.right - m_webviewOption.windowRect.left,
 			m_webviewOption.windowRect.bottom - m_webviewOption.windowRect.top,
@@ -268,7 +268,7 @@ AppWindow::AppWindow(
 	else
 	{
 		m_mainWindow = CreateWindowExW(
-			WS_EX_CONTROLPARENT, GetWindowClass(), szTitle, WS_OVERLAPPEDWINDOW,
+			m_webviewOption.winStyle, GetWindowClass(), szTitle, WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
 			nullptr, nullptr, g_hInstance, nullptr);
 	}
