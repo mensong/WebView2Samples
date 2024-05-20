@@ -24,9 +24,6 @@
     <ClInclude Include="pch.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\WebView2APISample\WebViewApi.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\3RD\json\JSON.h">
       <Filter>json</Filter>
     </ClInclude>

@@ -178,7 +178,7 @@ void AppWindow::InitializeWebView()
 HRESULT AppWindow::OnCreateCoreWebView2ControllerCompleted(
     HRESULT result, ICoreWebView2CompositionController* compositionController)
 {
-    if (result == S_OK)
+    if (result == S_OK && compositionController)
     {
         m_compositionController = compositionController;
         CHECK_FAILURE(m_compositionController->QueryInterface(IID_PPV_ARGS(&m_controller)));

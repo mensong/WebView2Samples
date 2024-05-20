@@ -544,6 +544,7 @@ bool AppWindow::ExecuteWebViewCommands(WPARAM wParam, LPARAM lParam)
 {
 	if (!m_webView)
 		return false;
+
 	switch (LOWORD(wParam))
 	{
 	case IDM_GET_BROWSER_VERSION_AFTER_CREATION:
@@ -736,6 +737,33 @@ bool AppWindow::ExecuteAppCommands(WPARAM wParam, LPARAM lParam)
 	switch (LOWORD(wParam))
 	{
 	case IDM_ABOUT:
+		{
+
+			HANDLE ev = CreateEventA(NULL, TRUE, FALSE, NULL);
+			m_webView->ExecuteScript(L"var a='123';a",
+				Microsoft::WRL::Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
+					[this, ev](HRESULT error, PCWSTR result) -> HRESULT
+			{
+				MessageBox(NULL, result, L"", 0);
+				m_webView->ExecuteScript(L"alert('123');", nullptr);
+				SetEvent(ev);
+				return S_OK;
+			}).Get());
+
+
+			MSG msg;
+			while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+			{
+				::DispatchMessage(&msg);
+				::TranslateMessage(&msg);
+
+				if (WaitForSingleObject(ev, 0) == WAIT_OBJECT_0)
+				{
+					break;
+				}
+			}
+			CloseHandle(ev);
+		}
 		DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_ABOUTBOX), m_mainWindow, About);
 		return true;
 	case IDM_GET_BROWSER_VERSION_BEFORE_CREATION:
@@ -1279,7 +1307,7 @@ void AppWindow::InitializeWebView()
 				L"Attempting to create WebView using WinComp Visual is not supported.\r\n"
 				"WinComp compositor creation failed.\r\n"
 				"Current OS may not support WinComp.",
-				L"Create with Windowless WinComp Visual Failed", MB_OK);
+				L"Create with Windowless headless WinComp Visual Failed", MB_OK);
 			return;
 		}
 		m_wincompCompositor = winrtComp::Compositor();
@@ -1824,7 +1852,38 @@ void AppWindow::RegisterEventHandlers()
 		return S_OK;
 	}).Get(), nullptr));
 	//! [NewBrowserVersionAvailable]
-		
+	
+	//! [WebResourceRequested]
+	// Register a handler for the WebResourceRequested event.
+	// This handler will close the app window if it is not the main window.
+	if (m_webviewOption.headers.size() > 0)
+	{
+		//开启资源请求拦截
+		m_webView->AddWebResourceRequestedFilter(L"*", COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
+		//添加资源请求事件
+		CHECK_FAILURE(m_webView->add_WebResourceRequested(
+			Callback<ICoreWebView2WebResourceRequestedEventHandler>(
+				[this](ICoreWebView2* sender, ICoreWebView2WebResourceRequestedEventArgs* args)
+		{
+			wil::com_ptr<ICoreWebView2WebResourceRequest> request;
+			//wil::com_ptr<ICoreWebView2WebResourceResponse> response;
+			CHECK_FAILURE(args->get_Request(&request));
+			wil::com_ptr<ICoreWebView2HttpRequestHeaders> requestHeaders;
+			HRESULT hr = request->get_Headers(&requestHeaders);
+			if (SUCCEEDED(hr))
+			{
+				for (size_t i = 0; i < m_webviewOption.headers.size(); i++)
+				{
+					requestHeaders->SetHeader(
+						m_webviewOption.headers[i].first.c_str(),
+						m_webviewOption.headers[i].second.c_str());
+				}
+			}
+			return S_OK;
+		}).Get(), &m_webResourceRequestedToken));
+	}
+	//! [WebResourceRequested]
+
 	//! [NavigationStarting]
 	// Register a handler for the NavigationStarting event.
 	// This handler will close the app window if it is not the main window.
@@ -1845,38 +1904,6 @@ void AppWindow::RegisterEventHandlers()
 				return S_OK;
 			}).Get(), nullptr));
 	//! [NavigationStarting]
-	
-	//! [WebResourceRequested]
-	// Register a handler for the WebResourceRequested event.
-	// This handler will close the app window if it is not the main window.
-	if (m_webviewOption.headers.size() > 0)
-	{
-		//开启资源请求拦截
-		m_webView->AddWebResourceRequestedFilter(L"*", COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
-		//添加资源请求事件
-		CHECK_FAILURE(m_webView->add_WebResourceRequested(
-			Callback<ICoreWebView2WebResourceRequestedEventHandler>(
-				[this](ICoreWebView2* sender, ICoreWebView2WebResourceRequestedEventArgs* args)
-				{
-					wil::com_ptr<ICoreWebView2WebResourceRequest> request;
-					//wil::com_ptr<ICoreWebView2WebResourceResponse> response;
-					CHECK_FAILURE(args->get_Request(&request));
-					wil::com_ptr<ICoreWebView2HttpRequestHeaders> requestHeaders;
-					HRESULT hr = request->get_Headers(&requestHeaders);
-					if (SUCCEEDED(hr))
-					{
-						for (size_t i = 0; i < m_webviewOption.headers.size(); i++)
-						{
-							requestHeaders->SetHeader(
-								m_webviewOption.headers[i].first.c_str(),
-								m_webviewOption.headers[i].second.c_str());
-						}
-					}
-					return S_OK;
-				})
-			.Get(), &m_webResourceRequestedToken));
-	}
-	//! [WebResourceRequested]
 
 	//! [NavigationCompleted]
 	// Register a handler for the NavigationCompleted event.
@@ -1886,7 +1913,8 @@ void AppWindow::RegisterEventHandlers()
 			ICoreWebView2* sender,
 			ICoreWebView2NavigationCompletedEventArgs* args)
 	{
-		//使得document.cookies可以访问完整的cookie
+		//使用document.cookies无法获取HttpOnly类型的Cookies
+		//所以需要在这里获得所有Cookies
 		//! [CookieManager]
 		//先清空旧的cookies信息
 		m_cookies.clear();
@@ -1920,8 +1948,7 @@ void AppWindow::RegisterEventHandlers()
 					}
 
 					return S_OK;
-				})
-					.Get());
+				}).Get());
 			}
 		}
 		//! [CookieManager]
@@ -1932,6 +1959,15 @@ void AppWindow::RegisterEventHandlers()
 		{
 			sender->ExecuteScript(loadedScript.c_str(), nullptr);
 		}
+
+		////获得网页源代码
+		//sender->ExecuteScript(L"document.documentElement.outerHTML",
+		//	Microsoft::WRL::Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
+		//		[this](HRESULT error, PCWSTR result) -> HRESULT
+		//{
+		//	MessageBox(NULL, std::to_wstring(wcslen(result)).c_str(), L"", 0);
+		//	return S_OK;
+		//}).Get());
 
 		return S_OK;
 	}).Get(),

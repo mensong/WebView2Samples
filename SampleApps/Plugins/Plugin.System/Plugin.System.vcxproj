@@ -305,7 +305,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\WebView2APISample\WebViewApi.h" />
     <ClInclude Include="..\3RD\json\JSON.h" />
     <ClInclude Include="..\3RD\json\JSONValue.h" />
     <ClInclude Include="framework.h" />

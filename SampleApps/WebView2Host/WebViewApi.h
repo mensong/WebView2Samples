@@ -13,7 +13,14 @@ class AppWindow;
 
 
 
-#ifdef WEBVIEW_PLUGINS
+//#ifdef WEBVIEW_PLUGINS
+
+typedef void(*FN_ExecuteScriptResultCallback)(HRESULT error, PCWSTR result);
+typedef HRESULT(*FN_ExecuteScriptAsync)(AppWindow* appWindow, BSTR stringScript,
+	FN_ExecuteScriptResultCallback resultCallback);
+typedef void (*FN_CloseApp)(AppWindow* appWindow);
+typedef HWND(*FN_GetHWND)(AppWindow* appWindow);
+
 
 #define DEF_PROC(hDll, name) \
 	name = (FN_##name)::GetProcAddress(hDll, #name)
@@ -27,14 +34,15 @@ public:
 		return s_ins;
 	}
 
-	static void SetResultString(BSTR* stringResult, const wchar_t* data)
+	static void SetResultString(BSTR* outStringResult, const wchar_t* data)
 	{
-		*stringResult = SysAllocString(data);
+		*outStringResult = SysAllocString(data);
 	}
 
-	typedef HRESULT(*FN_ExecuteScriptAsync)(AppWindow* appWindow, BSTR stringScript, BSTR* stringResult);
-	typedef void (*FN_CloseApp)(AppWindow* appWindow);
-	typedef HWND(*FN_GetHWND)(AppWindow* appWindow);
+	static void FreeResultString(BSTR stringResult)
+	{
+		SysFreeString(stringResult);
+	}
 
 	FN_ExecuteScriptAsync		ExecuteScriptAsync;
 	FN_CloseApp					CloseApp;
@@ -72,4 +80,4 @@ private:
 	HMODULE hDll;
 };
 
-#endif
+//#endif

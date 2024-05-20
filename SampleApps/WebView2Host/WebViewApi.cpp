@@ -20,18 +20,52 @@ using namespace Microsoft::WRL;
 
 #define WEBVIEW_API extern "C" __declspec(dllexport)
 
-WEBVIEW_API HRESULT ExecuteScriptAsync(AppWindow* appWindow, BSTR stringScript, BSTR* stringResult)
+WEBVIEW_API HRESULT ExecuteScriptAsync(AppWindow* appWindow, BSTR stringScript, 
+	FN_ExecuteScriptResultCallback resultCallback)
 {
-	appWindow->RunAsync([appWindow, stringScript]()->void {
+	appWindow->RunAsync([appWindow, stringScript, resultCallback]()->void {
 		appWindow->GetWebView()->ExecuteScript(stringScript,
 		Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
-			[](HRESULT error, PCWSTR result) -> HRESULT
+			[&](HRESULT error, PCWSTR result) -> HRESULT
 		{
+			if (resultCallback)
+				resultCallback(error, result);
 			return S_OK;
 		}).Get());
 	});
 	
 	return S_OK;
+}
+
+WEBVIEW_API HRESULT ExecuteScript(AppWindow* appWindow, BSTR stringScript, BSTR* stringResult)
+{
+	HRESULT res = S_OK;
+	HANDLE ev = CreateEventA(NULL, TRUE, FALSE, NULL);
+
+	appWindow->GetWebView()->ExecuteScript(stringScript,
+		Microsoft::WRL::Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
+			[&](HRESULT error, PCWSTR result) -> HRESULT
+	{
+		res = error;
+		WebViewApi::SetResultString(stringResult, result);
+		SetEvent(ev);
+		return S_OK;
+	}).Get());
+
+	MSG msg;
+	while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+	{
+		::DispatchMessage(&msg);
+		::TranslateMessage(&msg);
+
+		if (WaitForSingleObject(ev, 0) == WAIT_OBJECT_0)
+		{
+			break;
+		}
+	}
+	CloseHandle(ev);
+
+	return res;
 }
 
 WEBVIEW_API void CloseApp(AppWindow* appWindow)

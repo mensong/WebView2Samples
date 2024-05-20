@@ -747,9 +747,9 @@ bool ViewComponent::OnMouseMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
     // Manually relay mouse messages to the WebView
 #ifdef USE_WEBVIEW2_WIN10
-    if (m_dcompDevice || m_wincompCompositor)
+    if ((m_dcompDevice || m_wincompCompositor) && m_compositionController)
 #else
-    if (m_dcompDevice)
+    if (m_dcompDevice && m_compositionController)
 #endif
     {
         POINT point;
@@ -882,19 +882,23 @@ bool ViewComponent::OnPointerMessage(UINT message, WPARAM wParam, LPARAM lParam)
             }
 
             handled = true;
+
             // Add the current offset before creating the CoreWebView2PointerInfo
-            D2D1_MATRIX_4X4_F m_webViewInputTransformMatrix = m_webViewTransformMatrix;
-            m_webViewInputTransformMatrix._41 += m_webViewBounds.left;
-            m_webViewInputTransformMatrix._42 += m_webViewBounds.top;
-            wil::com_ptr<ICoreWebView2PointerInfo> pointer_info;
-            wil::com_ptr<ICoreWebView2ExperimentalCompositionController4>
-                compositionControllerExperimental4 = m_compositionController.try_query<ICoreWebView2ExperimentalCompositionController4>();
-            COREWEBVIEW2_MATRIX_4X4* webviewMatrix =
-                reinterpret_cast<COREWEBVIEW2_MATRIX_4X4*>(&m_webViewInputTransformMatrix);
-            CHECK_FAILURE(compositionControllerExperimental4->CreateCoreWebView2PointerInfoFromPointerId(
-                pointerId, m_appWindow->GetMainWindow(), *webviewMatrix, &pointer_info));
-            CHECK_FAILURE(m_compositionController->SendPointerInput(
-                static_cast<COREWEBVIEW2_POINTER_EVENT_KIND>(message), pointer_info.get()));
+            if (m_compositionController)
+            {
+                D2D1_MATRIX_4X4_F m_webViewInputTransformMatrix = m_webViewTransformMatrix;
+                m_webViewInputTransformMatrix._41 += m_webViewBounds.left;
+                m_webViewInputTransformMatrix._42 += m_webViewBounds.top;
+                wil::com_ptr<ICoreWebView2PointerInfo> pointer_info;
+                wil::com_ptr<ICoreWebView2ExperimentalCompositionController4>
+                    compositionControllerExperimental4 = m_compositionController.try_query<ICoreWebView2ExperimentalCompositionController4>();
+                COREWEBVIEW2_MATRIX_4X4* webviewMatrix =
+                    reinterpret_cast<COREWEBVIEW2_MATRIX_4X4*>(&m_webViewInputTransformMatrix);
+                CHECK_FAILURE(compositionControllerExperimental4->CreateCoreWebView2PointerInfoFromPointerId(
+                    pointerId, m_appWindow->GetMainWindow(), *webviewMatrix, &pointer_info));
+                CHECK_FAILURE(m_compositionController->SendPointerInput(
+                    static_cast<COREWEBVIEW2_POINTER_EVENT_KIND>(message), pointer_info.get()));
+            }
         }
     }
     return handled;
