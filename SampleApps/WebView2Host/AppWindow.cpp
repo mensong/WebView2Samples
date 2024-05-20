@@ -740,28 +740,41 @@ bool AppWindow::ExecuteAppCommands(WPARAM wParam, LPARAM lParam)
 		{
 
 			HANDLE ev = CreateEventA(NULL, TRUE, FALSE, NULL);
-			m_webView->ExecuteScript(L"var a='123';a",
+			m_webView->ExecuteScript(L"document.documentElement.outerHTML",
 				Microsoft::WRL::Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
 					[this, ev](HRESULT error, PCWSTR result) -> HRESULT
 			{
-				MessageBox(NULL, result, L"", 0);
-				m_webView->ExecuteScript(L"alert('123');", nullptr);
+				std::wstring res;
+				if (wcslen(result) > 2048)
+					res.assign(result, 2048);
+				else
+					res.assign(result);
+				MessageBox(NULL, res.c_str(), L"", 0);
+				//m_webView->ExecuteScript(L"alert('123');", nullptr);
+
 				SetEvent(ev);
 				return S_OK;
 			}).Get());
 
 
 			MSG msg;
-			while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+			while (true)
 			{
-				::DispatchMessage(&msg);
-				::TranslateMessage(&msg);
+				if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+				{
+
+					::DispatchMessage(&msg);
+					::TranslateMessage(&msg);
+				}
 
 				if (WaitForSingleObject(ev, 0) == WAIT_OBJECT_0)
 				{
 					break;
 				}
+				Sleep(1);
 			}
+			DWORD err = GetLastError();
+
 			CloseHandle(ev);
 		}
 		DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_ABOUTBOX), m_mainWindow, About);

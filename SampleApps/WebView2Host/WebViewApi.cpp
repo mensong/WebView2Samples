@@ -53,15 +53,18 @@ WEBVIEW_API HRESULT ExecuteScript(AppWindow* appWindow, BSTR stringScript, BSTR*
 	}).Get());
 
 	MSG msg;
-	while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+	while (true)
 	{
-		::DispatchMessage(&msg);
-		::TranslateMessage(&msg);
+		if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			::DispatchMessage(&msg);
+			::TranslateMessage(&msg);
+		}
 
 		if (WaitForSingleObject(ev, 0) == WAIT_OBJECT_0)
-		{
 			break;
-		}
+
+		Sleep(1);
 	}
 	CloseHandle(ev);
 
