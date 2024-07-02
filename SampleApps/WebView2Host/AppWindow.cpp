@@ -1310,7 +1310,7 @@ void AppWindow::InitializeWebView()
 		}
 	}
 #ifdef USE_WEBVIEW2_WIN10
-	else if (m_creationModeId == IDM_CREATION_MODE_VISUAL_WINCOMP)
+	else if (GetWebViewOption().creationModeId == IDM_CREATION_MODE_VISUAL_WINCOMP)
 	{
 		HRESULT hr = TryCreateDispatcherQueue();
 		if (!SUCCEEDED(hr))
